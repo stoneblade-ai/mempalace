@@ -2,7 +2,7 @@
 """
 MemPalace MCP Server — read/write palace access for Claude Code
 ================================================================
-Install: claude mcp add mempalace -- python -m mempalace.mcp_server
+Install: claude mcp add mempalace -- python -m mempalace.mcp_server [--palace /path/to/palace]
 
 Tools (read):
   mempalace_status          — total drawers, wing/room breakdown
@@ -17,6 +17,8 @@ Tools (write):
   mempalace_delete_drawer   — remove a drawer by ID
 """
 
+import argparse
+import os
 import sys
 import json
 import logging
@@ -31,12 +33,30 @@ import chromadb
 
 from .knowledge_graph import KnowledgeGraph
 
-_kg = KnowledgeGraph()
-
 logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
 logger = logging.getLogger("mempalace_mcp")
 
+
+def _parse_args():
+    parser = argparse.ArgumentParser(description="MemPalace MCP Server")
+    parser.add_argument(
+        "--palace",
+        metavar="PATH",
+        help="Path to the palace directory (overrides config file and env var)",
+    )
+    return parser.parse_args()
+
+
+_args = _parse_args()
+
+if _args.palace:
+    os.environ["MEMPALACE_PALACE_PATH"] = os.path.abspath(_args.palace)
+
 _config = MempalaceConfig()
+if _args.palace:
+    _kg = KnowledgeGraph(db_path=os.path.join(_config.palace_path, "knowledge_graph.sqlite3"))
+else:
+    _kg = KnowledgeGraph()
 
 
 _client_cache = None
