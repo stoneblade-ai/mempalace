@@ -123,7 +123,10 @@ def cmd_publish(args):
             target_room=args.room,
         )
         if result.get("success"):
-            print(f"  Published: {result['team_drawer_id']} (v{result['version']}, {result['action']})")
+            team_id = result.get('team_drawer_id', '?')
+            version = result.get('version', '?')
+            action = result.get('action', 'published')
+            print(f"  Published: {team_id} (v{version}, {action})")
         else:
             print(f"  Error: {result.get('error', 'unknown')}")
     else:

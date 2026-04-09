@@ -13,9 +13,9 @@ def test_search_layer_flag_parsed():
                 main()
             except SystemExit:
                 pass
-            if mock_search.called:
-                args = mock_search.call_args[0][0]
-                assert args.layer == "local"
+            assert mock_search.called, "cmd_search was not dispatched"
+            args = mock_search.call_args[0][0]
+            assert args.layer == "local"
 
 
 def test_publish_command_parsed():
@@ -28,6 +28,6 @@ def test_publish_command_parsed():
                 main()
             except SystemExit:
                 pass
-            if mock_publish.called:
-                args = mock_publish.call_args[0][0]
-                assert args.drawer_id == "drawer_123"
+            assert mock_publish.called, "cmd_publish was not dispatched"
+            args = mock_publish.call_args[0][0]
+            assert args.drawer_id == "drawer_123"
