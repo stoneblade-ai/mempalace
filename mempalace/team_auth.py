@@ -15,9 +15,22 @@ def hash_api_key(key: str) -> str:
 
 
 def resolve_user(api_key: str, users: dict):
-    """Look up user config by API key hash. Returns user dict or None."""
+    """Look up user config by API key hash. Returns user dict or None.
+    Rejects grace-period keys that have expired."""
+    from datetime import datetime
+
     key_hash = hash_api_key(api_key)
-    return users.get(key_hash)
+    user = users.get(key_hash)
+    if user is None:
+        return None
+    grace_expires = user.get("grace_expires")
+    if grace_expires:
+        try:
+            if datetime.fromisoformat(grace_expires) < datetime.now():
+                return None  # Grace period expired
+        except (ValueError, TypeError):
+            return None  # Malformed date = reject
+    return user
 
 
 def check_wing_permission(user: dict, wing: str, operation: str) -> bool:

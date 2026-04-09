@@ -48,7 +48,7 @@ def cmd_team_status(args):
     else:
         print(f"  Status: connected")
         print(f"  Server version: {result.get('version', '?')}")
-        print(f"  Total drawers: {result.get('total_drawers', '?')}")
+        print(f"  Total drawers: {result.get('drawer_count', '?')}")
 
 
 def cmd_team_whoami(args):

@@ -101,6 +101,12 @@ def cmd_mine(args):
 def cmd_search(args):
     from .searcher import search, SearchError
 
+    layer = getattr(args, "layer", None)
+    if layer == "team":
+        print("  Team-only search is available via the MCP interface.")
+        print("  Use: mempalace mcp  (to set up MCP for your AI client)")
+        return
+
     palace_path = os.path.expanduser(args.palace) if args.palace else MempalaceConfig().palace_path
     try:
         search(

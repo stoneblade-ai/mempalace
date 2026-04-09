@@ -285,15 +285,20 @@ def create_app(config_path: str, data_dir: str) -> FastAPI:
         if client_version != current_version:
             return JSONResponse(status_code=409, content={"error": "Version conflict", "current_version": current_version})
 
-        # Permission: admin can delete any, member only own
+        # Check wing write permission + ownership
+        try:
+            result = collection.get(ids=[drawer_id], include=["metadatas"])
+            meta = result["metadatas"][0] if result["metadatas"] else {}
+        except Exception:
+            meta = {}
+
+        wing = meta.get("wing", "")
+        if wing and not check_wing_permission(user, wing, "write"):
+            return JSONResponse(status_code=403, content={"error": f"Write permission denied for wing '{wing}'"})
+
         if user.get("role") != "admin":
-            try:
-                result = collection.get(ids=[drawer_id], include=["metadatas"])
-                meta = result["metadatas"][0] if result["metadatas"] else {}
-                if meta.get("published_by") != user.get("user_id"):
-                    return JSONResponse(status_code=403, content={"error": "Only admin can delete other users' drawers"})
-            except Exception:
-                pass
+            if meta.get("published_by") != user.get("user_id"):
+                return JSONResponse(status_code=403, content={"error": "Only admin can delete other users' drawers"})
 
         collection.delete(ids=[drawer_id])
         version_map.pop(drawer_id, None)
