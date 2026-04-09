@@ -533,6 +533,35 @@ def main():
     # status
     sub.add_parser("status", help="Show what's been filed")
 
+    # team
+    p_team = sub.add_parser("team", help="Team server management")
+    team_sub = p_team.add_subparsers(dest="team_command")
+
+    t_init = team_sub.add_parser("init", help="Configure team server connection")
+    t_init.add_argument("--server", required=True, help="Team server URL")
+    t_init.add_argument("--api-key", required=True, dest="api_key", help="Your API key")
+
+    team_sub.add_parser("status", help="Show connection status")
+    team_sub.add_parser("whoami", help="Show current user + wings")
+
+    t_serve = team_sub.add_parser("serve", help="Start team server")
+    t_serve.add_argument("--host", default="127.0.0.1")
+    t_serve.add_argument("--port", type=int, default=8900)
+    t_serve.add_argument("--config", default=None)
+    t_serve.add_argument("--data-dir", default=None, dest="data_dir")
+
+    t_add = team_sub.add_parser("add-user", help="Add a user")
+    t_add.add_argument("--id", required=True)
+    t_add.add_argument("--role", default="member")
+    t_add.add_argument("--read-wings", required=True, dest="read_wings")
+    t_add.add_argument("--write-wings", required=True, dest="write_wings")
+
+    t_rm = team_sub.add_parser("remove-user", help="Remove a user")
+    t_rm.add_argument("--id", required=True)
+
+    t_rot = team_sub.add_parser("rotate-key", help="Rotate user's API key")
+    t_rot.add_argument("--id", required=True)
+
     args = parser.parse_args()
 
     if not args.command:
@@ -554,6 +583,15 @@ def main():
             return
         args.name = name
         cmd_instructions(args)
+        return
+
+    if args.command == "team":
+        from .team_cli import TEAM_COMMANDS
+        handler = TEAM_COMMANDS.get(getattr(args, "team_command", None))
+        if handler:
+            handler(args)
+        else:
+            p_team.print_help()
         return
 
     dispatch = {
