@@ -173,6 +173,33 @@ class MempalaceConfig:
         """Mapping of hall names to keyword lists."""
         return self._file_config.get("hall_keywords", DEFAULT_HALL_KEYWORDS)
 
+    @property
+    def team_enabled(self):
+        """Whether team layer is enabled."""
+        team = self._file_config.get("team", {})
+        return bool(team.get("enabled", False))
+
+    @property
+    def team_server(self):
+        """Team server URL."""
+        team = self._file_config.get("team", {})
+        return team.get("server")
+
+    @property
+    def team_api_key(self):
+        """Team API key. Env var MEMPALACE_TEAM_API_KEY takes precedence."""
+        env_val = os.environ.get("MEMPALACE_TEAM_API_KEY")
+        if env_val:
+            return env_val
+        team = self._file_config.get("team", {})
+        return team.get("api_key")
+
+    @property
+    def team_timeout(self):
+        """Team server timeout in seconds."""
+        team = self._file_config.get("team", {})
+        return team.get("timeout_seconds", 3)
+
     def init(self):
         """Create config directory and write default config.json if it doesn't exist."""
         self._config_dir.mkdir(parents=True, exist_ok=True)
