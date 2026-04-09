@@ -131,3 +131,40 @@ def test_wings_and_taxonomy(team_env):
     resp = team_env["client"].get("/api/v1/taxonomy", headers=headers)
     assert resp.status_code == 200
     assert "wing_test" in resp.json()["taxonomy"]
+
+
+def test_kg_add_and_query(team_env):
+    headers = {"X-API-Key": team_env["api_key"]}
+    resp = team_env["client"].post("/api/v1/kg/add", headers=headers, json={
+        "subject": "Maya", "predicate": "completed", "object": "auth migration",
+    })
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+
+    resp = team_env["client"].post("/api/v1/kg/query", headers=headers, json={"entity": "Maya"})
+    assert resp.status_code == 200
+    facts = resp.json()["facts"]
+    assert len(facts) >= 1
+    assert any(f["predicate"] == "completed" for f in facts)
+
+
+def test_kg_invalidate(team_env):
+    headers = {"X-API-Key": team_env["api_key"]}
+    team_env["client"].post("/api/v1/kg/add", headers=headers, json={
+        "subject": "Max", "predicate": "does", "object": "swimming",
+    })
+    resp = team_env["client"].post("/api/v1/kg/invalidate", headers=headers, json={
+        "subject": "Max", "predicate": "does", "object": "swimming",
+    })
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+
+
+def test_kg_timeline(team_env):
+    headers = {"X-API-Key": team_env["api_key"]}
+    team_env["client"].post("/api/v1/kg/add", headers=headers, json={
+        "subject": "project", "predicate": "started", "object": "v2",
+    })
+    resp = team_env["client"].get("/api/v1/kg/timeline/project", headers=headers)
+    assert resp.status_code == 200
+    assert len(resp.json()["timeline"]) >= 1

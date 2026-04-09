@@ -12,6 +12,7 @@ from fastapi import FastAPI, Header, Query, Request
 from fastapi.responses import JSONResponse
 
 from .config import sanitize_content, sanitize_name
+from .knowledge_graph import KnowledgeGraph
 from .team_auth import check_wing_permission, resolve_user
 from .version import __version__
 
@@ -36,6 +37,10 @@ def _load_users(config_path: str) -> dict:
 def create_app(config_path: str, data_dir: str) -> FastAPI:
     """Create and return the FastAPI team server app."""
     app = FastAPI(title="MemPalace Team Server", version=__version__)
+
+    # Setup KnowledgeGraph
+    data_path = Path(data_dir)
+    team_kg = KnowledgeGraph(db_path=str(data_path / "knowledge_graph.sqlite3"))
 
     # Setup ChromaDB
     import chromadb
@@ -531,5 +536,103 @@ def create_app(config_path: str, data_dir: str) -> FastAPI:
 
         # Convert to plain dicts
         return {"taxonomy": {w: dict(rooms) for w, rooms in tree.items()}}
+
+    # ── Knowledge Graph ───────────────────────────────────────────────────────
+
+    @app.post("/api/v1/kg/query")
+    async def kg_query(
+        request: Request,
+        x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+    ):
+        user, err = _require_auth(x_api_key)
+        if err:
+            return err
+
+        body = await request.json()
+        entity = body.get("entity", "")
+        as_of = body.get("as_of")
+        direction = body.get("direction", "both")
+
+        if not entity:
+            return JSONResponse(status_code=422, content={"error": "entity is required"})
+
+        facts = team_kg.query_entity(entity, as_of=as_of, direction=direction)
+        return {"entity": entity, "facts": facts, "count": len(facts)}
+
+    @app.post("/api/v1/kg/add")
+    async def kg_add(
+        request: Request,
+        x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+    ):
+        user, err = _require_auth(x_api_key)
+        if err:
+            return err
+
+        body = await request.json()
+        subject = body.get("subject", "")
+        predicate = body.get("predicate", "")
+        obj = body.get("object", "")
+        valid_from = body.get("valid_from")
+        source_closet = body.get("source_closet")
+
+        try:
+            subject = sanitize_name(subject, "subject")
+            predicate = sanitize_name(predicate, "predicate")
+            obj = sanitize_name(obj, "object")
+        except ValueError as e:
+            return JSONResponse(status_code=422, content={"error": str(e)})
+
+        now = _now_iso()
+        _wal_append({
+            "op": "kg_add",
+            "subject": subject,
+            "predicate": predicate,
+            "object": obj,
+            "user_id": user.get("user_id"),
+            "at": now,
+        })
+
+        triple_id = team_kg.add_triple(subject, predicate, obj, valid_from=valid_from, source_closet=source_closet)
+        return {"success": True, "triple_id": triple_id}
+
+    @app.post("/api/v1/kg/invalidate")
+    async def kg_invalidate(
+        request: Request,
+        x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+    ):
+        user, err = _require_auth(x_api_key)
+        if err:
+            return err
+
+        body = await request.json()
+        subject = body.get("subject", "")
+        predicate = body.get("predicate", "")
+        obj = body.get("object", "")
+        ended = body.get("ended")
+
+        now = _now_iso()
+        _wal_append({
+            "op": "kg_invalidate",
+            "subject": subject,
+            "predicate": predicate,
+            "object": obj,
+            "user_id": user.get("user_id"),
+            "at": now,
+        })
+
+        team_kg.invalidate(subject, predicate, obj, ended=ended)
+        return {"success": True}
+
+    @app.get("/api/v1/kg/timeline/{entity}")
+    async def kg_timeline(
+        entity: str,
+        x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+    ):
+        user, err = _require_auth(x_api_key)
+        if err:
+            return err
+
+        timeline = team_kg.timeline(entity_name=entity)
+        return {"entity": entity, "timeline": timeline, "count": len(timeline)}
 
     return app
