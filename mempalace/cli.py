@@ -114,6 +114,22 @@ def cmd_search(args):
         sys.exit(1)
 
 
+def cmd_publish(args):
+    from .mcp_server import tool_publish
+    if args.drawer_id:
+        result = tool_publish(
+            drawer_id=args.drawer_id,
+            target_wing=args.wing,
+            target_room=args.room,
+        )
+        if result.get("success"):
+            print(f"  Published: {result['team_drawer_id']} (v{result['version']}, {result['action']})")
+        else:
+            print(f"  Error: {result.get('error', 'unknown')}")
+    else:
+        print("  Usage: mempalace publish <drawer_id> [--wing W] [--room R]")
+
+
 def cmd_wakeup(args):
     """Show L0 (identity) + L1 (essential story) — the wake-up context."""
     from .layers import MemoryStack
@@ -449,6 +465,7 @@ def main():
     p_search.add_argument("--wing", default=None, help="Limit to one project")
     p_search.add_argument("--room", default=None, help="Limit to one room")
     p_search.add_argument("--results", type=int, default=5, help="Number of results")
+    p_search.add_argument("--layer", choices=["local", "team"], default=None, help="Search layer")
 
     # compress
     p_compress = sub.add_parser(
@@ -562,6 +579,12 @@ def main():
     t_rot = team_sub.add_parser("rotate-key", help="Rotate user's API key")
     t_rot.add_argument("--id", required=True)
 
+    # publish
+    publish_parser = sub.add_parser("publish", help="Publish local drawers to team layer")
+    publish_parser.add_argument("drawer_id", nargs="?", help="Drawer ID to publish")
+    publish_parser.add_argument("--wing", help="Override wing for batch publish filter or target")
+    publish_parser.add_argument("--room", help="Override room for batch publish filter or target")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -604,6 +627,7 @@ def main():
         "wake-up": cmd_wakeup,
         "repair": cmd_repair,
         "status": cmd_status,
+        "publish": cmd_publish,
     }
     dispatch[args.command](args)
 
