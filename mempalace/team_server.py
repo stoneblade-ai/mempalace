@@ -460,6 +460,9 @@ def create_app(config_path: str, data_dir: str) -> FastAPI:
             "published_by": meta.get("published_by", ""),
             "published_at": meta.get("published_at", ""),
             "version": meta.get("version", 1),
+            "source_type": meta.get("source_type", ""),
+            "origin_local_id": meta.get("origin_local_id", ""),
+            "origin_user_id": meta.get("origin_user_id", ""),
         }
 
     # ── Wings ─────────────────────────────────────────────────────────────────

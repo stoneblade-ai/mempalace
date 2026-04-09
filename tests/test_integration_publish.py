@@ -82,41 +82,32 @@ def test_publish_and_search_team(full_env):
     assert any(r["drawer_id"] == team_drawer_id for r in results)
     assert any("PostgreSQL" in r["content"] for r in results)
 
-    # Verify origin tracking via GET (origin stored in metadata, check via direct get)
+    # Verify origin tracking
     resp = full_env["team_client"].get(f"/api/v1/drawers/{team_drawer_id}", headers=headers)
     assert resp.status_code == 200
     drawer = resp.json()
-    assert drawer["drawer_id"] == team_drawer_id
-    assert "PostgreSQL" in drawer["content"]
-
-    # Verify origin and source_type were recorded (accessible through the collection metadata)
-    # The server stores origin_local_id and source_type in ChromaDB metadata.
-    # We verify them by inspecting the team collection directly via the local_col fixture's
-    # underlying chroma data — instead, we re-publish and check the 201 response confirms
-    # the publish flow is tracking origins at the storage level.
-    assert drawer["version"] == 1
+    assert drawer["origin_local_id"] == "drawer_wing_test_room_a_abc123"
+    assert drawer["source_type"] == "publish"
 
 
-def test_publish_records_origin_metadata(full_env):
-    """Verify origin tracking is stored in ChromaDB metadata after publish."""
+def test_direct_write_has_no_origin(full_env):
+    """Direct writes (not published from local) have empty origin fields."""
     headers = {"X-API-Key": full_env["api_key"]}
 
     resp = full_env["team_client"].post("/api/v1/drawers", headers=headers, json={
         "wing": "wing_test",
         "room": "room_decisions",
-        "content": "We chose PostgreSQL because of JSONB support and strong ecosystem.",
-        "source_type": "publish",
-        "origin": {"local_id": "drawer_wing_test_room_a_abc123", "user_id": "tester"},
+        "content": "A direct team note, not published from local.",
+        "source_type": "direct",
     })
     assert resp.status_code == 201
-    assert resp.json()["version"] == 1
     team_drawer_id = resp.json()["drawer_id"]
 
-    # Verify the drawer exists and is retrievable
     resp = full_env["team_client"].get(f"/api/v1/drawers/{team_drawer_id}", headers=headers)
     assert resp.status_code == 200
     drawer = resp.json()
-    assert drawer["drawer_id"] == team_drawer_id
+    assert drawer["source_type"] == "direct"
+    assert drawer["origin_local_id"] == ""
 
 
 def test_re_publish_updates_existing(full_env):
