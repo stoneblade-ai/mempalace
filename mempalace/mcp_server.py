@@ -585,6 +585,76 @@ def tool_diary_read(agent_name: str, last_n: int = 10):
         return {"error": str(e)}
 
 
+def tool_publish(drawer_id: str, target_wing: str = None, target_room: str = None):
+    """Publish a local drawer to the team server."""
+    if not _config.team_enabled:
+        return {"success": False, "error": "Team layer not configured"}
+
+    col = _get_collection()
+    if not col:
+        return _no_palace()
+
+    # Read local drawer
+    try:
+        result = col.get(ids=[drawer_id], include=["documents", "metadatas"])
+    except Exception:
+        return {"success": False, "error": f"Drawer not found: {drawer_id}"}
+
+    if not result["ids"]:
+        return {"success": False, "error": f"Drawer not found: {drawer_id}"}
+
+    content = result["documents"][0]
+    meta = result["metadatas"][0]
+    wing = target_wing or meta.get("wing", "")
+    room = target_room or meta.get("room", "")
+
+    published_as = meta.get("published_as_team_id", "")
+
+    import asyncio
+    from .team_client import TeamClient
+
+    client = TeamClient(
+        server_url=_config.team_server,
+        api_key=_config.team_api_key,
+        timeout=_config.team_timeout,
+    )
+
+    try:
+        loop = asyncio.new_event_loop()
+        if published_as:
+            # Re-publish: PATCH existing team drawer
+            version = int(meta.get("published_as_version", 1))
+            res = loop.run_until_complete(client.update_drawer(published_as, content, version))
+            if "error" in res and res.get("error") == "conflict":
+                return {"success": False, "error": "Version conflict on team server", **res}
+            new_version = res.get("version", version + 1)
+            meta["published_as_team_id"] = published_as
+            meta["published_as_version"] = str(new_version)
+            meta["published_as_at"] = res.get("published_at", "")
+            col.upsert(ids=[drawer_id], documents=[content], metadatas=[meta])
+            return {"success": True, "team_drawer_id": published_as, "version": new_version, "action": "updated"}
+        else:
+            # First publish
+            res = loop.run_until_complete(
+                client.add_drawer(wing=wing, room=room, content=content,
+                    source_type="publish", origin={"local_id": drawer_id, "user_id": "local"})
+            )
+            if "team" in res:
+                return {"success": False, "error": f"Team server {res['team']}"}
+            team_id = res.get("drawer_id", "")
+            version = res.get("version", 1)
+            meta["published_as_team_id"] = team_id
+            meta["published_as_version"] = str(version)
+            meta["published_as_at"] = datetime.now().isoformat()
+            col.upsert(ids=[drawer_id], documents=[content], metadatas=[meta])
+            return {"success": True, "team_drawer_id": team_id, "version": version, "action": "created"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+    finally:
+        loop.run_until_complete(client.close())
+        loop.close()
+
+
 # ==================== MCP PROTOCOL ====================
 
 TOOLS = {
@@ -793,6 +863,19 @@ TOOLS = {
             "required": ["drawer_id"],
         },
         "handler": tool_delete_drawer,
+    },
+    "mempalace_publish": {
+        "description": "Publish a local drawer to the team layer. First publish creates a new team drawer; re-publish updates the existing one. Requires team config.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "drawer_id": {"type": "string", "description": "Local drawer ID to publish"},
+                "target_wing": {"type": "string", "description": "Override wing on team layer (optional)"},
+                "target_room": {"type": "string", "description": "Override room on team layer (optional)"},
+            },
+            "required": ["drawer_id"],
+        },
+        "handler": tool_publish,
     },
     "mempalace_diary_write": {
         "description": "Write to your personal agent diary in AAAK format. Your observations, thoughts, what you worked on, what matters. Each agent has their own diary with full history. Write in AAAK for compression — e.g. 'SESSION:2026-04-04|built.palace.graph+diary.tools|ALC.req:agent.diaries.in.aaak|★★★'. Use entity codes from the AAAK spec.",
