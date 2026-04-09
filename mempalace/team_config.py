@@ -51,11 +51,9 @@ class TeamServerConfig:
 
     def rotate_key(self, user_id: str) -> str:
         users = self._data.get("users", {})
-        current_hash = None
         current_config = None
         for h, u in users.items():
             if u["user_id"] == user_id and "grace_expires" not in u:
-                current_hash = h
                 current_config = u
                 break
         if current_config is None:
