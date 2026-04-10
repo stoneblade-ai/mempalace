@@ -72,7 +72,7 @@ def test_team_config_disabled_by_default(tmp_path):
     """No team section = team disabled."""
     config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
-    (config_dir / "config.json").write_text(json.dumps({"palace_path": str(tmp_path / "palace")}))
+    (config_dir / "config.json").write_text(json.dumps({"cortex_path": str(tmp_path / "cortex")}))
     cfg = CortexConfig(config_dir=str(config_dir))
     assert cfg.team_enabled is False
     assert cfg.team_server is None
@@ -85,7 +85,7 @@ def test_team_config_from_file(tmp_path):
     config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
     (config_dir / "config.json").write_text(json.dumps({
-        "palace_path": str(tmp_path / "palace"),
+        "cortex_path": str(tmp_path / "cortex"),
         "team": {
             "enabled": True,
             "server": "https://team.example.com",
@@ -105,7 +105,7 @@ def test_team_api_key_env_var_overrides_config(tmp_path, monkeypatch):
     config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
     (config_dir / "config.json").write_text(json.dumps({
-        "palace_path": str(tmp_path / "palace"),
+        "cortex_path": str(tmp_path / "cortex"),
         "team": {
             "enabled": True,
             "server": "https://team.example.com",
@@ -788,13 +788,13 @@ def create_app(config_path: str, data_dir: str):
 
     data_path = Path(data_dir)
     data_path.mkdir(parents=True, exist_ok=True)
-    palace_path = data_path / "palace"
-    palace_path.mkdir(exist_ok=True)
+    cortex_path = data_path / "cortex"
+    cortex_path.mkdir(exist_ok=True)
     wal_path = data_path / "wal"
     wal_path.mkdir(exist_ok=True)
     wal_file = wal_path / "write_log.jsonl"
 
-    chroma_client = chromadb.PersistentClient(path=str(palace_path))
+    chroma_client = chromadb.PersistentClient(path=str(cortex_path))
     collection = chroma_client.get_or_create_collection("cortex_team_drawers")
 
     # In-memory version store: drawer_id -> version int
@@ -1832,9 +1832,9 @@ def test_search_without_team_config(tmp_path, monkeypatch):
     import cortex.mcp_server as mcp
     mock_config = MagicMock()
     mock_config.team_enabled = False
-    mock_config.palace_path = str(tmp_path / "palace")
+    mock_config.cortex_path = str(tmp_path / "cortex")
     monkeypatch.setattr(mcp, "_config", mock_config)
-    # With no palace, we get the no_palace error — that's fine,
+    # With no cortex, we get the no_cortex error — that's fine,
     # we're testing that team routing doesn't crash
     result = tool_search("test query")
     assert "error" in result or "results" in result
@@ -1882,7 +1882,7 @@ def tool_publish(drawer_id: str, target_wing: str = None, target_room: str = Non
 
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
 
     # Read local drawer
     try:
@@ -1993,7 +1993,7 @@ def test_team_init_creates_config(tmp_path, monkeypatch):
     """team init writes team config to config.json."""
     config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
-    (config_dir / "config.json").write_text(json.dumps({"palace_path": str(tmp_path / "palace")}))
+    (config_dir / "config.json").write_text(json.dumps({"cortex_path": str(tmp_path / "cortex")}))
 
     mock_args = MagicMock()
     mock_args.server = "https://team.example.com"
@@ -2405,11 +2405,11 @@ from cortex.team_server import create_app
 
 @pytest.fixture
 def full_env(tmp_path):
-    """Set up both local palace and team server."""
-    # Local palace
-    local_palace = tmp_path / "local_palace"
-    local_palace.mkdir()
-    local_client = chromadb.PersistentClient(path=str(local_palace))
+    """Set up both local cortex and team server."""
+    # Local cortex
+    local_cortex = tmp_path / "local_cortex"
+    local_cortex.mkdir()
+    local_client = chromadb.PersistentClient(path=str(local_cortex))
     local_col = local_client.get_or_create_collection("cortex_drawers")
 
     # Add a local drawer

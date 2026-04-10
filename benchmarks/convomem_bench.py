@@ -7,7 +7,7 @@ Evaluates Cortex's retrieval against the ConvoMem benchmark.
 75,336 QA pairs across 6 evidence categories.
 
 For each evidence item:
-1. Ingest all conversations into a fresh Cortex palace (one drawer per message)
+1. Ingest all conversations into a fresh Cortex cortex (one drawer per message)
 2. Query with the question
 3. Check if any retrieved message matches the evidence messages
 
@@ -175,10 +175,10 @@ def retrieve_for_item(item, top_k=10, mode="raw"):
         return 0.0, {"error": "empty corpus"}
 
     tmpdir = tempfile.mkdtemp(prefix="cortex_convomem_")
-    palace_path = os.path.join(tmpdir, "palace")
+    cortex_path = os.path.join(tmpdir, "cortex")
 
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         collection = client.create_collection("cortex_drawers")
 
         # Optionally compress

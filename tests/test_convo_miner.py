@@ -12,10 +12,10 @@ def test_convo_mining():
             "> What is memory?\nMemory is persistence.\n\n> Why does it matter?\nIt enables continuity.\n\n> How do we build it?\nWith structured storage.\n"
         )
 
-    palace_path = os.path.join(tmpdir, "palace")
-    mine_convos(tmpdir, palace_path, wing="test_convos")
+    cortex_path = os.path.join(tmpdir, "cortex")
+    mine_convos(tmpdir, cortex_path, wing="test_convos")
 
-    client = chromadb.PersistentClient(path=palace_path)
+    client = chromadb.PersistentClient(path=cortex_path)
     col = client.get_collection("cortex_drawers")
     assert col.count() >= 2
 

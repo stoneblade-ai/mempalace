@@ -231,7 +231,7 @@ PREDICATES = [
 ]
 
 
-class PalaceDataGenerator:
+class CortexDataGenerator:
     """Generate deterministic, realistic test data at configurable scale."""
 
     def __init__(self, seed=42, scale="small"):
@@ -399,20 +399,20 @@ class PalaceDataGenerator:
 
         return str(base), wing
 
-    # ── Direct palace population (bypasses mining for speed) ─────────────
+    # ── Direct cortex population (bypasses mining for speed) ─────────────
 
-    def populate_palace_directly(self, palace_path, n_drawers=None, include_needles=True):
+    def populate_cortex_directly(self, cortex_path, n_drawers=None, include_needles=True):
         """
         Insert drawers directly into ChromaDB, bypassing the mining pipeline.
 
         Much faster than mining for benchmarks that only care about
-        search/MCP behavior on a pre-populated palace.
+        search/MCP behavior on a pre-populated cortex.
 
         Returns (client, collection, needle_info).
         """
         n_drawers = n_drawers or self.cfg["drawers"]
-        os.makedirs(palace_path, exist_ok=True)
-        client = chromadb.PersistentClient(path=palace_path)
+        os.makedirs(cortex_path, exist_ok=True)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_or_create_collection("cortex_drawers")
 
         batch_size = 500

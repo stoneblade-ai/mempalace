@@ -7,8 +7,8 @@ Evaluates Cortex's retrieval against the LongMemEval benchmark.
 No modifications to LongMemEval's code required.
 
 For each of the 500 questions:
-1. Ingest all haystack sessions into a fresh Cortex palace
-2. Query the palace with the question
+1. Ingest all haystack sessions into a fresh Cortex cortex
+2. Query the cortex with the question
 3. Score retrieval against ground-truth answer sessions
 
 Outputs:
@@ -160,9 +160,9 @@ def _fresh_collection(name="cortex_drawers"):
 # =============================================================================
 
 
-def build_palace_and_retrieve(entry, granularity="session", n_results=50):
+def build_cortex_and_retrieve(entry, granularity="session", n_results=50):
     """
-    Build a fresh Cortex palace from haystack sessions, then retrieve.
+    Build a fresh Cortex cortex from haystack sessions, then retrieve.
 
     Args:
         entry: One LongMemEval question entry
@@ -241,7 +241,7 @@ def build_palace_and_retrieve(entry, granularity="session", n_results=50):
     return ranked_indices, corpus, corpus_ids, corpus_timestamps
 
 
-def build_palace_and_retrieve_aaak(entry, granularity="session", n_results=50):
+def build_cortex_and_retrieve_aaak(entry, granularity="session", n_results=50):
     """
     AAAK mode: compress each session/turn with AAAK dialect before ingesting.
     Query still uses raw question text — tests whether compressed representations
@@ -396,7 +396,7 @@ def detect_room_for_text(text):
     return "general"
 
 
-def build_palace_and_retrieve_rooms(entry, granularity="session", n_results=50):
+def build_cortex_and_retrieve_rooms(entry, granularity="session", n_results=50):
     """
     Room-structured mode: detect topic room per session, then do a two-pass search:
     1. Detect what room the question belongs to
@@ -482,7 +482,7 @@ def build_palace_and_retrieve_rooms(entry, granularity="session", n_results=50):
     return ranked_indices, corpus, corpus_ids, corpus_timestamps
 
 
-def build_palace_and_retrieve_hybrid(
+def build_cortex_and_retrieve_hybrid(
     entry, granularity="session", n_results=50, hybrid_weight=0.30
 ):
     """
@@ -635,7 +635,7 @@ def build_palace_and_retrieve_hybrid(
     return ranked_indices, corpus, corpus_ids, corpus_timestamps
 
 
-def build_palace_and_retrieve_full(entry, granularity="session", n_results=50):
+def build_cortex_and_retrieve_full(entry, granularity="session", n_results=50):
     """
     Full-turn mode: index BOTH user and assistant turns per session.
 
@@ -706,7 +706,7 @@ def build_palace_and_retrieve_full(entry, granularity="session", n_results=50):
 # =============================================================================
 
 
-def build_palace_and_retrieve_hybrid_v2(
+def build_cortex_and_retrieve_hybrid_v2(
     entry, granularity="session", n_results=50, hybrid_weight=0.30
 ):
     """
@@ -991,7 +991,7 @@ def build_palace_and_retrieve_hybrid_v2(
 # =============================================================================
 
 
-def build_palace_and_retrieve_hybrid_v3(
+def build_cortex_and_retrieve_hybrid_v3(
     entry, granularity="session", n_results=50, hybrid_weight=0.30
 ):
     """
@@ -1336,13 +1336,13 @@ def build_palace_and_retrieve_hybrid_v3(
     return ranked_indices, corpus_user, corpus_ids, corpus_timestamps
 
 
-def build_palace_and_retrieve_hybrid_v4(
+def build_cortex_and_retrieve_hybrid_v4(
     entry, granularity="session", n_results=50, hybrid_weight=0.30
 ):
     """
     Hybrid V4: hybrid_v3 + three targeted fixes for the final 3 misses.
 
-    Analysis of remaining misses at 99.4% (both hybrid_v3 and palace fail on these):
+    Analysis of remaining misses at 99.4% (both hybrid_v3 and cortex fail on these):
 
     Miss 1 — 'high school reunion' (d6233ab6, single-session-preference):
         Target session: "I still remember the happy high school experiences such as
@@ -1805,10 +1805,10 @@ def build_palace_and_retrieve_hybrid_v4(
 
 
 # =============================================================================
-# PALACE MODE — Hall classification + drawer indexing + hall-boosted retrieval
+# CORTEX MODE — Hall classification + drawer indexing + hall-boosted retrieval
 # =============================================================================
 
-# Hall names mirror the Cortex palace taxonomy
+# Hall names mirror the Cortex cortex taxonomy
 HALL_PREFERENCES = "hall_preferences"
 HALL_FACTS = "hall_facts"
 HALL_EVENTS = "hall_events"
@@ -1818,7 +1818,7 @@ HALL_GENERAL = "hall_general"
 
 def classify_session_hall(session):
     """
-    Assign a session to a palace hall based on its content.
+    Assign a session to a cortex hall based on its content.
 
     Heuristics (checked in priority order):
       hall_preferences  — user expresses preferences, concerns, ongoing struggles
@@ -1917,7 +1917,7 @@ def classify_session_hall(session):
 
 def classify_question_hall(question):
     """
-    Infer which palace hall a question is asking about.
+    Infer which cortex hall a question is asking about.
 
     Returns a list of halls in priority order (first = most likely).
     """
@@ -1997,17 +1997,17 @@ def classify_question_hall(question):
     return [HALL_GENERAL]
 
 
-def build_palace_and_retrieve_palace(
+def build_cortex_and_retrieve_cortex(
     entry, granularity="session", n_results=50, hybrid_weight=0.30
 ):
     """
-    Palace-mode retrieval: navigate by hall first, fall back to full search.
+    Cortex-mode retrieval: navigate by hall first, fall back to full search.
 
-    The palace insight: don't search everything flat. Enter through the right
+    The cortex insight: don't search everything flat. Enter through the right
     hall — a smaller, more focused subset — and get a tight answer fast.
     Only widen to the full haystack if the hall search doesn't yield confidence.
 
-    PALACE
+    CORTEX
       └── HALL (classified per session: preferences / facts / events / assistant / general)
             └── CLOSET (user turns per session — what the user said)
                   └── DRAWER (assistant turns — only opened for assistant-reference questions)
@@ -2155,7 +2155,7 @@ def build_palace_and_retrieve_palace(
         return unique[:10]
 
     # -------------------------------------------------------------------------
-    # Build palace — classify sessions into halls, build per-hall closets
+    # Build cortex — classify sessions into halls, build per-hall closets
     # -------------------------------------------------------------------------
     sessions = entry["haystack_sessions"]
     session_ids = entry["haystack_session_ids"]
@@ -2442,7 +2442,7 @@ def diary_ingest_session(session, sess_id, api_key, model="claude-haiku-4-5-2025
     return None
 
 
-def build_palace_and_retrieve_diary(
+def build_cortex_and_retrieve_diary(
     entry,
     granularity="session",
     n_results=50,
@@ -2452,9 +2452,9 @@ def build_palace_and_retrieve_diary(
     diary_model="claude-haiku-4-5-20251001",
 ):
     """
-    Diary mode: palace retrieval + LLM topic layer at ingest.
+    Diary mode: cortex retrieval + LLM topic layer at ingest.
 
-    On top of palace mode's hall/closet/drawer navigation, diary mode adds:
+    On top of cortex mode's hall/closet/drawer navigation, diary mode adds:
 
     DIARY LAYER (per session, computed once and cached):
       - Haiku reads the session → extracts 2-5 specific topics + a summary
@@ -2564,7 +2564,7 @@ def build_palace_and_retrieve_diary(
                 return extractor(m)
         return None
 
-    # Preference extraction (same 16 patterns as v3/palace)
+    # Preference extraction (same 16 patterns as v3/cortex)
     PREF_PATTERNS = [
         r"i(?:'ve been| have been) having (?:trouble|issues?|problems?) with ([^,\.!?]{5,80})",
         r"i(?:'ve been| have been) feeling ([^,\.!?]{5,60})",
@@ -2654,7 +2654,7 @@ def build_palace_and_retrieve_diary(
                     }
                 )
 
-        # PREFERENCE WING (same as v3/palace)
+        # PREFERENCE WING (same as v3/cortex)
         prefs = extract_preferences(session)
         if prefs:
             pref_doc = "User has mentioned: " + "; ".join(prefs)
@@ -2664,7 +2664,7 @@ def build_palace_and_retrieve_diary(
     if not corpus_user:
         return [], corpus_user, corpus_ids, corpus_timestamps
 
-    # Hall navigation (same as palace)
+    # Hall navigation (same as cortex)
     target_halls = classify_question_hall(question)
     primary_hall = target_halls[0]
     query_keywords = extract_keywords(question)
@@ -3066,37 +3066,37 @@ def run_benchmark(
 
         # Run retrieval with selected mode
         if mode == "aaak":
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_aaak(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_aaak(
                 entry, granularity=granularity
             )
         elif mode == "rooms":
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_rooms(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_rooms(
                 entry, granularity=granularity
             )
         elif mode == "hybrid":
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_hybrid(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_hybrid(
                 entry, granularity=granularity, hybrid_weight=hybrid_weight
             )
         elif mode == "hybrid_v2":
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_hybrid_v2(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_hybrid_v2(
                 entry, granularity=granularity, hybrid_weight=hybrid_weight
             )
         elif mode == "hybrid_v3":
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_hybrid_v3(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_hybrid_v3(
                 entry, granularity=granularity, hybrid_weight=hybrid_weight
             )
         elif mode == "hybrid_v4":
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_hybrid_v4(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_hybrid_v4(
                 entry, granularity=granularity, hybrid_weight=hybrid_weight
             )
-        elif mode == "palace":
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_palace(
+        elif mode == "cortex":
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_cortex(
                 entry, granularity=granularity, hybrid_weight=hybrid_weight
             )
         elif mode == "diary":
             # If skip_precompute, pass empty api_key to prevent inline Haiku calls
             _diary_api_key = "" if skip_precompute else api_key
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_diary(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_diary(
                 entry,
                 granularity=granularity,
                 hybrid_weight=hybrid_weight,
@@ -3105,11 +3105,11 @@ def run_benchmark(
                 diary_model=llm_model,
             )
         elif mode == "full":
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve_full(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve_full(
                 entry, granularity=granularity
             )
         else:
-            rankings, corpus, corpus_ids, corpus_timestamps = build_palace_and_retrieve(
+            rankings, corpus, corpus_ids, corpus_timestamps = build_cortex_and_retrieve(
                 entry, granularity=granularity
             )
 
@@ -3117,9 +3117,9 @@ def run_benchmark(
             print(f"  [{i + 1:4}/{len(data)}] {qid[:30]:30} SKIP (empty corpus)")
             continue
 
-        # Optional LLM re-ranking pass (larger pool for v3/palace to catch rank-11-12 misses)
+        # Optional LLM re-ranking pass (larger pool for v3/cortex to catch rank-11-12 misses)
         if llm_rerank_enabled:
-            rerank_pool = 20 if mode in ("hybrid_v3", "hybrid_v4", "palace") else 10
+            rerank_pool = 20 if mode in ("hybrid_v3", "hybrid_v4", "cortex") else 10
             rankings = llm_rerank(
                 question, rankings, corpus, corpus_ids, api_key, top_k=rerank_pool, model=llm_model
             )
@@ -3261,12 +3261,12 @@ if __name__ == "__main__":
             "hybrid_v2",
             "hybrid_v3",
             "hybrid_v4",
-            "palace",
+            "cortex",
             "diary",
             "full",
         ],
         default="raw",
-        help="Retrieval mode: raw, hybrid, hybrid_v2, hybrid_v3, palace, diary (palace + LLM topic layer)",
+        help="Retrieval mode: raw, hybrid, hybrid_v2, hybrid_v3, cortex, diary (cortex + LLM topic layer)",
     )
     parser.add_argument("--out", default=None, help="Output JSONL file path")
     parser.add_argument(
@@ -3311,7 +3311,7 @@ if __name__ == "__main__":
         action="store_true",
         default=False,
         help="Skip diary pre-computation for sessions not in cache. "
-        "Uses cache as-is; uncached sessions fall back to palace-only retrieval.",
+        "Uses cache as-is; uncached sessions fall back to cortex-only retrieval.",
     )
     parser.add_argument(
         "--embed-model",

@@ -10,7 +10,7 @@ def test_config_bad_json(tmp_path):
     """Bad JSON in config file falls back to empty."""
     (tmp_path / "config.json").write_text("not json", encoding="utf-8")
     cfg = CortexConfig(config_dir=str(tmp_path))
-    assert cfg.palace_path  # still returns default
+    assert cfg.cortex_path  # still returns default
 
 
 def test_people_map_from_file(tmp_path):
@@ -48,7 +48,7 @@ def test_init_idempotent(tmp_path):
     cfg.init()  # second call should not overwrite
     with open(tmp_path / "config.json") as f:
         data = json.load(f)
-    assert "palace_path" in data
+    assert "cortex_path" in data
 
 
 def test_save_people_map(tmp_path):
@@ -60,15 +60,15 @@ def test_save_people_map(tmp_path):
     assert data["alice"] == "Alice Smith"
 
 
-def test_env_cortex_palace_path(tmp_path):
-    """CORTEX_PALACE_PATH (legacy) should also work."""
-    os.environ.pop("CORTEX_PALACE_PATH", None)
-    os.environ["CORTEX_PALACE_PATH"] = "/legacy/path"
+def test_env_cortex_path(tmp_path):
+    """CORTEX_PATH (legacy) should also work."""
+    os.environ.pop("CORTEX_PATH", None)
+    os.environ["CORTEX_PATH"] = "/legacy/path"
     try:
         cfg = CortexConfig(config_dir=str(tmp_path))
-        assert cfg.palace_path == "/legacy/path"
+        assert cfg.cortex_path == "/legacy/path"
     finally:
-        del os.environ["CORTEX_PALACE_PATH"]
+        del os.environ["CORTEX_PATH"]
 
 
 def test_collection_name_from_config(tmp_path):

@@ -14,11 +14,11 @@ from cortex.team_server import create_app
 
 @pytest.fixture
 def full_env(tmp_path):
-    """Set up both local palace and team server."""
-    # Local palace
-    local_palace = tmp_path / "local_palace"
-    local_palace.mkdir()
-    local_client = chromadb.PersistentClient(path=str(local_palace))
+    """Set up both local cortex and team server."""
+    # Local cortex
+    local_cortex = tmp_path / "local_cortex"
+    local_cortex.mkdir()
+    local_client = chromadb.PersistentClient(path=str(local_cortex))
     local_col = local_client.get_or_create_collection("cortex_drawers")
 
     # Add a local drawer

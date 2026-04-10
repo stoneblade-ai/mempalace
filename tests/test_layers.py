@@ -83,13 +83,13 @@ def _mock_chromadb_for_layer(docs, metas, monkeypatch=None):
     return mock_client
 
 
-def test_layer1_no_palace():
-    """Layer1 returns helpful message when no palace exists."""
+def test_layer1_no_cortex():
+    """Layer1 returns helpful message when no cortex exists."""
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent/palace"
-        layer = Layer1(palace_path="/nonexistent/palace")
+        mock_cfg.return_value.cortex_path = "/nonexistent/cortex"
+        layer = Layer1(cortex_path="/nonexistent/cortex")
     result = layer.generate()
-    assert "No palace found" in result or "No memories" in result
+    assert "No cortex found" in result or "No memories" in result
 
 
 def test_layer1_generates_essential_story():
@@ -107,15 +107,15 @@ def test_layer1_generates_essential_story():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer1(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer1(cortex_path="/fake")
         result = layer.generate()
 
     assert "ESSENTIAL STORY" in result
     assert "project decisions" in result
 
 
-def test_layer1_empty_palace():
+def test_layer1_empty_cortex():
     mock_col = MagicMock()
     mock_col.get.return_value = {"documents": [], "metadatas": []}
     mock_client = MagicMock()
@@ -125,8 +125,8 @@ def test_layer1_empty_palace():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer1(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer1(cortex_path="/fake")
         result = layer.generate()
 
     assert "No memories" in result
@@ -141,8 +141,8 @@ def test_layer1_with_wing_filter():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer1(palace_path="/fake", wing="project_x")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer1(cortex_path="/fake", wing="project_x")
         result = layer.generate()
 
     assert "ESSENTIAL STORY" in result
@@ -160,8 +160,8 @@ def test_layer1_truncates_long_snippets():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer1(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer1(cortex_path="/fake")
         result = layer.generate()
 
     assert "..." in result
@@ -177,8 +177,8 @@ def test_layer1_respects_max_chars():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer1(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer1(cortex_path="/fake")
         layer.MAX_CHARS = 200  # Very low cap to trigger truncation
         result = layer.generate()
 
@@ -199,8 +199,8 @@ def test_layer1_importance_from_various_keys():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer1(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer1(cortex_path="/fake")
         result = layer.generate()
 
     assert "ESSENTIAL STORY" in result
@@ -220,8 +220,8 @@ def test_layer1_batch_exception_breaks():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer1(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer1(cortex_path="/fake")
         result = layer.generate()
 
     assert "ESSENTIAL STORY" in result
@@ -230,12 +230,12 @@ def test_layer1_batch_exception_breaks():
 # ── Layer2 — mocked chromadb ────────────────────────────────────────────
 
 
-def test_layer2_no_palace():
+def test_layer2_no_cortex():
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent/palace"
-        layer = Layer2(palace_path="/nonexistent/palace")
+        mock_cfg.return_value.cortex_path = "/nonexistent/cortex"
+        layer = Layer2(cortex_path="/nonexistent/cortex")
     result = layer.retrieve(wing="test")
-    assert "No palace found" in result
+    assert "No cortex found" in result
 
 
 def test_layer2_retrieve_with_wing():
@@ -251,8 +251,8 @@ def test_layer2_retrieve_with_wing():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer2(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer2(cortex_path="/fake")
         result = layer.retrieve(wing="project")
 
     assert "ON-DEMAND" in result
@@ -272,8 +272,8 @@ def test_layer2_retrieve_with_room():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer2(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer2(cortex_path="/fake")
         result = layer.retrieve(room="architecture")
 
     assert "ON-DEMAND" in result
@@ -292,8 +292,8 @@ def test_layer2_retrieve_wing_and_room():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer2(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer2(cortex_path="/fake")
         result = layer.retrieve(wing="proj", room="backend")
 
     assert "ON-DEMAND" in result
@@ -311,8 +311,8 @@ def test_layer2_retrieve_empty():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer2(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer2(cortex_path="/fake")
         result = layer.retrieve(wing="missing")
 
     assert "No drawers found" in result
@@ -328,8 +328,8 @@ def test_layer2_retrieve_no_filter():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer2(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer2(cortex_path="/fake")
         layer.retrieve()
 
     # No where filter should be passed
@@ -347,8 +347,8 @@ def test_layer2_retrieve_error():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer2(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer2(cortex_path="/fake")
         result = layer.retrieve(wing="test")
 
     assert "Retrieval error" in result
@@ -367,8 +367,8 @@ def test_layer2_truncates_long_snippets():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer2(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer2(cortex_path="/fake")
         result = layer.retrieve(wing="test")
 
     assert "..." in result
@@ -385,18 +385,18 @@ def _mock_query_results(docs, metas, dists):
     }
 
 
-def test_layer3_no_palace():
+def test_layer3_no_cortex():
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent/palace"
-        layer = Layer3(palace_path="/nonexistent/palace")
+        mock_cfg.return_value.cortex_path = "/nonexistent/cortex"
+        layer = Layer3(cortex_path="/nonexistent/cortex")
     result = layer.search("test query")
-    assert "No palace found" in result
+    assert "No cortex found" in result
 
 
-def test_layer3_search_raw_no_palace():
+def test_layer3_search_raw_no_cortex():
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent/palace"
-        layer = Layer3(palace_path="/nonexistent/palace")
+        mock_cfg.return_value.cortex_path = "/nonexistent/cortex"
+        layer = Layer3(cortex_path="/nonexistent/cortex")
     result = layer.search_raw("test query")
     assert result == []
 
@@ -415,8 +415,8 @@ def test_layer3_search_with_results():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         result = layer.search("important")
 
     assert "SEARCH RESULTS" in result
@@ -434,8 +434,8 @@ def test_layer3_search_no_results():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         result = layer.search("nothing")
 
     assert "No results found" in result
@@ -455,8 +455,8 @@ def test_layer3_search_with_wing_filter():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         layer.search("q", wing="proj")
 
     call_kwargs = mock_col.query.call_args[1]
@@ -477,8 +477,8 @@ def test_layer3_search_with_room_filter():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         layer.search("q", room="backend")
 
     call_kwargs = mock_col.query.call_args[1]
@@ -499,8 +499,8 @@ def test_layer3_search_with_wing_and_room():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         layer.search("q", wing="proj", room="backend")
 
     call_kwargs = mock_col.query.call_args[1]
@@ -517,8 +517,8 @@ def test_layer3_search_error():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         result = layer.search("q")
 
     assert "Search error" in result
@@ -538,8 +538,8 @@ def test_layer3_search_truncates_long_docs():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         result = layer.search("q")
 
     assert "..." in result
@@ -559,8 +559,8 @@ def test_layer3_search_raw_returns_dicts():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         hits = layer.search_raw("q")
 
     assert len(hits) == 1
@@ -584,8 +584,8 @@ def test_layer3_search_raw_with_filters():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         layer.search_raw("q", wing="w", room="r")
 
     call_kwargs = mock_col.query.call_args[1]
@@ -602,8 +602,8 @@ def test_layer3_search_raw_error():
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
-        layer = Layer3(palace_path="/fake")
+        mock_cfg.return_value.cortex_path = "/fake"
+        layer = Layer3(cortex_path="/fake")
         result = layer.search_raw("q")
 
     assert result == []
@@ -617,16 +617,16 @@ def test_memory_stack_wake_up(tmp_path):
     identity_file.write_text("I am Atlas.")
 
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent"
+        mock_cfg.return_value.cortex_path = "/nonexistent"
         stack = MemoryStack(
-            palace_path="/nonexistent",
+            cortex_path="/nonexistent",
             identity_path=str(identity_file),
         )
         result = stack.wake_up()
 
     assert "Atlas" in result
-    # L1 will say no palace found
-    assert "No palace" in result or "No memories" in result
+    # L1 will say no cortex found
+    assert "No cortex" in result or "No memories" in result
 
 
 def test_memory_stack_wake_up_with_wing(tmp_path):
@@ -634,9 +634,9 @@ def test_memory_stack_wake_up_with_wing(tmp_path):
     identity_file.write_text("I am Atlas.")
 
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent"
+        mock_cfg.return_value.cortex_path = "/nonexistent"
         stack = MemoryStack(
-            palace_path="/nonexistent",
+            cortex_path="/nonexistent",
             identity_path=str(identity_file),
         )
         result = stack.wake_up(wing="my_project")
@@ -650,14 +650,14 @@ def test_memory_stack_recall(tmp_path):
     identity_file.write_text("I am Atlas.")
 
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent"
+        mock_cfg.return_value.cortex_path = "/nonexistent"
         stack = MemoryStack(
-            palace_path="/nonexistent",
+            cortex_path="/nonexistent",
             identity_path=str(identity_file),
         )
         result = stack.recall(wing="test")
 
-    assert "No palace found" in result
+    assert "No cortex found" in result
 
 
 def test_memory_stack_search(tmp_path):
@@ -665,14 +665,14 @@ def test_memory_stack_search(tmp_path):
     identity_file.write_text("I am Atlas.")
 
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent"
+        mock_cfg.return_value.cortex_path = "/nonexistent"
         stack = MemoryStack(
-            palace_path="/nonexistent",
+            cortex_path="/nonexistent",
             identity_path=str(identity_file),
         )
         result = stack.search("test query")
 
-    assert "No palace found" in result
+    assert "No cortex found" in result
 
 
 def test_memory_stack_status(tmp_path):
@@ -680,14 +680,14 @@ def test_memory_stack_status(tmp_path):
     identity_file.write_text("I am Atlas.")
 
     with patch("cortex.layers.CortexConfig") as mock_cfg:
-        mock_cfg.return_value.palace_path = "/nonexistent"
+        mock_cfg.return_value.cortex_path = "/nonexistent"
         stack = MemoryStack(
-            palace_path="/nonexistent",
+            cortex_path="/nonexistent",
             identity_path=str(identity_file),
         )
         result = stack.status()
 
-    assert result["palace_path"] == "/nonexistent"
+    assert result["cortex_path"] == "/nonexistent"
     assert result["total_drawers"] == 0
     assert "L0_identity" in result
     assert "L1_essential" in result
@@ -695,7 +695,7 @@ def test_memory_stack_status(tmp_path):
     assert "L3_deep_search" in result
 
 
-def test_memory_stack_status_with_palace(tmp_path):
+def test_memory_stack_status_with_cortex(tmp_path):
     identity_file = tmp_path / "identity.txt"
     identity_file.write_text("I am Atlas.")
 
@@ -708,9 +708,9 @@ def test_memory_stack_status_with_palace(tmp_path):
         patch("cortex.layers.CortexConfig") as mock_cfg,
         patch("cortex.layers.chromadb.PersistentClient", return_value=mock_client),
     ):
-        mock_cfg.return_value.palace_path = "/fake"
+        mock_cfg.return_value.cortex_path = "/fake"
         stack = MemoryStack(
-            palace_path="/fake",
+            cortex_path="/fake",
             identity_path=str(identity_file),
         )
         result = stack.status()

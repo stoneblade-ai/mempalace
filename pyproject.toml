@@ -1,7 +1,7 @@
 [project]
 name = "cortex"
 version = "3.1.0"
-description = "Give your AI a memory — mine projects and conversations into a searchable palace. No API key required."
+description = "Give your AI a memory — mine projects and conversations into a searchable cortex. No API key required."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"

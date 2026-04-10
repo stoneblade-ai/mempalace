@@ -8,7 +8,7 @@ def test_team_config_disabled_by_default(tmp_path):
     """No team section = team disabled."""
     config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
-    (config_dir / "config.json").write_text(json.dumps({"palace_path": str(tmp_path / "palace")}))
+    (config_dir / "config.json").write_text(json.dumps({"cortex_path": str(tmp_path / "cortex")}))
     cfg = CortexConfig(config_dir=str(config_dir))
     assert cfg.team_enabled is False
     assert cfg.team_server is None
@@ -21,7 +21,7 @@ def test_team_config_from_file(tmp_path):
     config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
     (config_dir / "config.json").write_text(json.dumps({
-        "palace_path": str(tmp_path / "palace"),
+        "cortex_path": str(tmp_path / "cortex"),
         "team": {
             "enabled": True,
             "server": "https://team.example.com",
@@ -41,7 +41,7 @@ def test_team_api_key_env_var_overrides_config(tmp_path, monkeypatch):
     config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
     (config_dir / "config.json").write_text(json.dumps({
-        "palace_path": str(tmp_path / "palace"),
+        "cortex_path": str(tmp_path / "cortex"),
         "team": {
             "enabled": True,
             "server": "https://team.example.com",

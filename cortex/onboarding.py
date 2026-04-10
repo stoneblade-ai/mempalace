@@ -202,7 +202,7 @@ def _ask_wings(mode: str) -> list:
     defaults = DEFAULT_WINGS[mode]
     _hr()
     print(f"""
-  Wings are the top-level categories in your memory palace.
+  Wings are the top-level categories in your memory cortex.
 
   Suggested wings for {mode} mode:
     {", ".join(defaults)}
@@ -314,7 +314,7 @@ def _generate_aaak_bootstrap(
 
     (cortex_dir / "aaak_entities.md").write_text("\n".join(registry_lines), encoding="utf-8")
 
-    # Critical facts bootstrap (pre-palace — before any mining)
+    # Critical facts bootstrap (pre-cortex — before any mining)
     facts_lines = [
         "# Critical Facts (bootstrap — will be enriched after mining)",
         "",
@@ -351,11 +351,11 @@ def _generate_aaak_bootstrap(
 
     facts_lines.extend(
         [
-            "## Palace",
+            "## Cortex",
             f"Wings: {', '.join(wings)}",
             f"Mode: {mode}",
             "",
-            "*This file will be enriched by palace_facts.py after mining.*",
+            "*This file will be enriched by cortex_facts.py after mining.*",
         ]
     )
 

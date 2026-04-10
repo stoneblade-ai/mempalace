@@ -26,7 +26,7 @@ Add team-shared memory to Cortex via a two-layer architecture: **private layer**
 └────────┬───────────────────┬────────────────────────┘
          │                   │ HTTPS + API Key
 ┌────────▼────────┐  ┌───────▼──────────────────────┐
-│  Local Palace    │  │  Team Server (new)            │
+│  Local Cortex    │  │  Team Server (new)            │
 │  ~/.cortex/   │  │  FastAPI + uvicorn            │
 │  - ChromaDB      │  │  - Auth middleware (API Key)  │
 │  - SQLite KG     │  │  - Permission check (wing)   │
@@ -38,7 +38,7 @@ Add team-shared memory to Cortex via a two-layer architecture: **private layer**
 
 ### Key Principles
 
-- Local palace code has zero changes. All existing tests continue to pass.
+- Local cortex code has zero changes. All existing tests continue to pass.
 - MCP Server gains a routing layer that decides: local, remote, or both.
 - AI-facing tool signatures are unchanged. Results gain a `layer` field.
 - No `team` config = behavior identical to today.
@@ -117,7 +117,7 @@ Local drawers that have been published gain a `published_as` field:
 ```json
 // ~/.cortex/config.json — new "team" section
 {
-  "palace_path": "~/.cortex/palace",
+  "cortex_path": "~/.cortex/data",
   "team": {
     "enabled": true,
     "server": "https://cortex.team.example.com",
@@ -234,7 +234,7 @@ cortex team rotate-key --id kai   # generates new key, old key valid for 24h gra
 ```
 ~/.cortex/
   ├── config.json              # New "team" section added
-  ├── palace/
+  ├── cortex/
   │   ├── chroma.sqlite3       # ChromaDB local storage (unchanged)
   │   └── ...
   ├── knowledge_graph.sqlite3  # Local KG (unchanged)
@@ -247,7 +247,7 @@ cortex team rotate-key --id kai   # generates new key, old key valid for 24h gra
 ```
 /var/cortex-team/
   ├── team_config.json         # Users + permissions
-  ├── palace/
+  ├── cortex/
   │   └── chroma/              # ChromaDB data (HttpClient mode)
   ├── knowledge_graph.sqlite3  # Team KG (SQLite v1, Postgres later)
   └── wal/

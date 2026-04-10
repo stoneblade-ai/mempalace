@@ -1,7 +1,7 @@
 {
   "name": "cortex",
   "version": "3.0.14",
-  "description": "Give your AI a memory — mine projects and conversations into a searchable palace. 19 MCP tools, auto-save hooks, and guided setup.",
+  "description": "Give your AI a memory — mine projects and conversations into a searchable cortex. 19 MCP tools, auto-save hooks, and guided setup.",
   "author": {
     "name": "milla-jovovich"
   },
@@ -22,7 +22,7 @@
     "rag",
     "mcp",
     "chromadb",
-    "palace",
+    "cortex",
     "search"
   ],
   "repository": "https://github.com/milla-jovovich/cortex"

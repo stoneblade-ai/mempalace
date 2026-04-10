@@ -15,8 +15,8 @@ The Python package that powers Cortex. All modules, all logic.
 | `layers.py` | 4-layer memory stack: L0 (identity), L1 (critical facts), L2 (room recall), L3 (deep search) |
 | `dialect.py` | AAAK compression — entity codes, emotion markers, 30x lossless ratio |
 | `knowledge_graph.py` | Temporal entity-relationship graph — SQLite, time-filtered queries, fact invalidation |
-| `palace_graph.py` | Room-based navigation graph — BFS traversal, tunnel detection across wings |
-| `mcp_server.py` | MCP server — 19 tools, AAAK auto-teach, Palace Protocol, agent diary |
+| `cortex_graph.py` | Room-based navigation graph — BFS traversal, tunnel detection across wings |
+| `mcp_server.py` | MCP server — 19 tools, AAAK auto-teach, Cortex Protocol, agent diary |
 | `onboarding.py` | Guided first-run setup — asks about people/projects, generates AAAK bootstrap + wing config |
 | `entity_registry.py` | Entity code registry — maps names to AAAK codes, handles ambiguous names |
 | `entity_detector.py` | Auto-detect people and projects from file content |
@@ -28,7 +28,7 @@ The Python package that powers Cortex. All modules, all logic.
 ## Architecture
 
 ```
-User → CLI → miner/convo_miner → ChromaDB (palace)
+User → CLI → miner/convo_miner → ChromaDB (cortex)
                                      ↕
                               knowledge_graph (SQLite)
                                      ↕
@@ -37,4 +37,4 @@ User → MCP Server → searcher → results
                   → diary    → agent journal
 ```
 
-The palace (ChromaDB) stores verbatim content. The knowledge graph (SQLite) stores structured relationships. The MCP server exposes both to any AI tool.
+The cortex (ChromaDB) stores verbatim content. The knowledge graph (SQLite) stores structured relationships. The MCP server exposes both to any AI tool.

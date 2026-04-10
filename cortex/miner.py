@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-miner.py — Files everything into the palace.
+miner.py — Files everything into the cortex.
 
 Reads cortex.yaml from the project directory to know the wing + rooms.
 Routes each file to the right room based on content.
@@ -17,7 +17,7 @@ from collections import defaultdict
 
 import chromadb
 
-from .palace import SKIP_DIRS, get_collection, file_already_mined
+from .store import SKIP_DIRS, get_collection, file_already_mined
 
 READABLE_EXTENSIONS = {
     ".txt",
@@ -366,14 +366,14 @@ def chunk_text(content: str, source_file: str) -> list:
 
 
 # =============================================================================
-# PALACE — ChromaDB operations
+# CORTEX — ChromaDB operations
 # =============================================================================
 
 
 def add_drawer(
     collection, wing: str, room: str, content: str, source_file: str, chunk_index: int, agent: str
 ):
-    """Add one drawer to the palace."""
+    """Add one drawer to the cortex."""
     drawer_id = f"drawer_{wing}_{room}_{hashlib.sha256((source_file + str(chunk_index)).encode()).hexdigest()[:24]}"
     try:
         metadata = {
@@ -529,7 +529,7 @@ def scan_project(
 
 def mine(
     project_dir: str,
-    palace_path: str,
+    cortex_path: str,
     wing_override: str = None,
     agent: str = "cortex",
     limit: int = 0,
@@ -537,7 +537,7 @@ def mine(
     respect_gitignore: bool = True,
     include_ignored: list = None,
 ):
-    """Mine a project directory into the palace."""
+    """Mine a project directory into the cortex."""
 
     project_path = Path(project_dir).expanduser().resolve()
     config = load_config(project_dir)
@@ -559,7 +559,7 @@ def mine(
     print(f"  Wing:    {wing}")
     print(f"  Rooms:   {', '.join(r['name'] for r in rooms)}")
     print(f"  Files:   {len(files)}")
-    print(f"  Palace:  {palace_path}")
+    print(f"  Cortex:  {cortex_path}")
     if dry_run:
         print("  DRY RUN — nothing will be filed")
     if not respect_gitignore:
@@ -569,7 +569,7 @@ def mine(
     print(f"{'─' * 55}\n")
 
     if not dry_run:
-        collection = get_collection(palace_path)
+        collection = get_collection(cortex_path)
     else:
         collection = None
 
@@ -612,13 +612,13 @@ def mine(
 # =============================================================================
 
 
-def status(palace_path: str):
-    """Show what's been filed in the palace."""
+def status(cortex_path: str):
+    """Show what's been filed in the cortex."""
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_collection("cortex_drawers")
     except Exception:
-        print(f"\n  No palace found at {palace_path}")
+        print(f"\n  No cortex found at {cortex_path}")
         print("  Run: cortex init <dir> then cortex mine <dir>")
         return
 

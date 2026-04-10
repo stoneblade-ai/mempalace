@@ -1,7 +1,7 @@
 """
 conftest.py — Shared fixtures for Cortex tests.
 
-Provides isolated palace and knowledge graph instances so tests never
+Provides isolated cortex and knowledge graph instances so tests never
 touch the user's real data or leak temp files on failure.
 
 HOME is redirected to a temp directory at module load time — before any
@@ -78,29 +78,29 @@ def tmp_dir():
 
 
 @pytest.fixture
-def palace_path(tmp_dir):
-    """Path to an empty palace directory inside tmp_dir."""
-    p = os.path.join(tmp_dir, "palace")
+def cortex_path(tmp_dir):
+    """Path to an empty cortex directory inside tmp_dir."""
+    p = os.path.join(tmp_dir, "cortex")
     os.makedirs(p)
     return p
 
 
 @pytest.fixture
-def config(tmp_dir, palace_path):
-    """A CortexConfig pointing at the temp palace."""
+def config(tmp_dir, cortex_path):
+    """A CortexConfig pointing at the temp cortex."""
     cfg_dir = os.path.join(tmp_dir, "config")
     os.makedirs(cfg_dir)
     import json
 
     with open(os.path.join(cfg_dir, "config.json"), "w") as f:
-        json.dump({"palace_path": palace_path}, f)
+        json.dump({"cortex_path": cortex_path}, f)
     return CortexConfig(config_dir=cfg_dir)
 
 
 @pytest.fixture
-def collection(palace_path):
-    """A ChromaDB collection pre-seeded in the temp palace."""
-    client = chromadb.PersistentClient(path=palace_path)
+def collection(cortex_path):
+    """A ChromaDB collection pre-seeded in the temp cortex."""
+    client = chromadb.PersistentClient(path=cortex_path)
     col = client.get_or_create_collection("cortex_drawers")
     yield col
     client.delete_collection("cortex_drawers")

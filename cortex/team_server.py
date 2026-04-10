@@ -45,9 +45,9 @@ def create_app(config_path: str, data_dir: str) -> FastAPI:
     # Setup ChromaDB
     import chromadb
 
-    palace_dir = Path(data_dir) / "palace"
-    palace_dir.mkdir(parents=True, exist_ok=True)
-    chroma_client = chromadb.PersistentClient(path=str(palace_dir))
+    cortex_dir = Path(data_dir) / "cortex"
+    cortex_dir.mkdir(parents=True, exist_ok=True)
+    chroma_client = chromadb.PersistentClient(path=str(cortex_dir))
     collection = chroma_client.get_or_create_collection(COLLECTION_NAME)
 
     # WAL setup

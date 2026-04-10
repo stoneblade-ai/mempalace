@@ -11,15 +11,15 @@ AI memory system. Store everything, find anything. Local, free, no API key.
 | /cortex:init      | Install and set up Cortex   |
 | /cortex:search    | Search your memories           |
 | /cortex:mine      | Mine projects and conversations|
-| /cortex:status    | Palace overview and stats      |
+| /cortex:status    | Cortex overview and stats      |
 | /cortex:help      | This help message              |
 
 ---
 
 ## MCP Tools (19)
 
-### Palace (read)
-- cortex_status -- Palace status and stats
+### Cortex (read)
+- cortex_status -- Cortex status and stats
 - cortex_list_wings -- List all wings
 - cortex_list_rooms -- List rooms in a wing
 - cortex_get_taxonomy -- Get the full taxonomy tree
@@ -27,7 +27,7 @@ AI memory system. Store everything, find anything. Local, free, no API key.
 - cortex_check_duplicate -- Check if a memory already exists
 - cortex_get_aaak_spec -- Get the AAAK specification
 
-### Palace (write)
+### Cortex (write)
 - cortex_add_drawer -- Add a new memory (drawer)
 - cortex_delete_drawer -- Delete a memory (drawer)
 
@@ -39,7 +39,7 @@ AI memory system. Store everything, find anything. Local, free, no API key.
 - cortex_kg_stats -- Knowledge graph statistics
 
 ### Navigation
-- cortex_traverse -- Traverse the palace structure
+- cortex_traverse -- Traverse the Cortex structure
 - cortex_find_tunnels -- Find cross-wing connections
 - cortex_graph_stats -- Graph connectivity statistics
 
@@ -51,14 +51,14 @@ AI memory system. Store everything, find anything. Local, free, no API key.
 
 ## CLI Commands
 
-    cortex init <dir>                  Initialize a new palace
+    cortex init <dir>                  Initialize a new Cortex
     cortex mine <dir>                  Mine a project (default mode)
     cortex mine <dir> --mode convos    Mine conversation exports
     cortex search "query"              Search your memories
     cortex split <dir>                 Split large transcript files
-    cortex wake-up                     Load palace into context
-    cortex compress                    Compress palace storage
-    cortex status                      Show palace status
+    cortex wake-up                     Load Cortex into context
+    cortex compress                    Compress Cortex storage
+    cortex status                      Show Cortex status
     cortex repair                      Rebuild vector index
     cortex mcp                         Show MCP setup command
     cortex hook run                    Run hook logic (for harness integration)
@@ -94,13 +94,13 @@ Hooks read JSON from stdin and output JSON to stdout. They can be invoked via:
     Halls connect rooms within a wing.
     Tunnels connect rooms across wings.
 
-The palace is stored locally using ChromaDB for vector search and SQLite for
+The Cortex is stored locally using ChromaDB for vector search and SQLite for
 metadata. No cloud services or API keys required.
 
 ---
 
 ## Getting Started
 
-1. /cortex:init -- Set up your palace
+1. /cortex:init -- Set up your Cortex
 2. /cortex:mine -- Mine a project or conversation
 3. /cortex:search -- Find what you stored

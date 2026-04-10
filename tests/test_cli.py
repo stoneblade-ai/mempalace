@@ -26,25 +26,25 @@ from cortex.cli import (
 
 
 @patch("cortex.cli.CortexConfig")
-def test_cmd_status_default_palace(mock_config_cls):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
-    args = argparse.Namespace(palace=None)
+def test_cmd_status_default_cortex(mock_config_cls):
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
+    args = argparse.Namespace(cortex=None)
     mock_miner = MagicMock()
     with patch.dict("sys.modules", {"cortex.miner": mock_miner}):
         cmd_status(args)
-        mock_miner.status.assert_called_once_with(palace_path="/fake/palace")
+        mock_miner.status.assert_called_once_with(cortex_path="/fake/cortex")
 
 
 @patch("cortex.cli.CortexConfig")
-def test_cmd_status_custom_palace(mock_config_cls):
-    args = argparse.Namespace(palace="~/my_palace")
+def test_cmd_status_custom_cortex(mock_config_cls):
+    args = argparse.Namespace(cortex="~/my_cortex")
     mock_miner = MagicMock()
     with patch.dict("sys.modules", {"cortex.miner": mock_miner}):
         cmd_status(args)
         import os
 
-        expected = os.path.expanduser("~/my_palace")
-        mock_miner.status.assert_called_once_with(palace_path=expected)
+        expected = os.path.expanduser("~/my_cortex")
+        mock_miner.status.assert_called_once_with(cortex_path=expected)
 
 
 # ── cmd_search ─────────────────────────────────────────────────────────
@@ -52,15 +52,15 @@ def test_cmd_status_custom_palace(mock_config_cls):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_search_calls_search(mock_config_cls):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
     args = argparse.Namespace(
-        palace=None, query="test query", wing="mywing", room="myroom", results=3
+        cortex=None, query="test query", wing="mywing", room="myroom", results=3
     )
     with patch("cortex.searcher.search") as mock_search:
         cmd_search(args)
         mock_search.assert_called_once_with(
             query="test query",
-            palace_path="/fake/palace",
+            cortex_path="/fake/cortex",
             wing="mywing",
             room="myroom",
             n_results=3,
@@ -69,8 +69,8 @@ def test_cmd_search_calls_search(mock_config_cls):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_search_error_exits(mock_config_cls):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
-    args = argparse.Namespace(palace=None, query="q", wing=None, room=None, results=5)
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
+    args = argparse.Namespace(cortex=None, query="q", wing=None, room=None, results=5)
     from cortex.searcher import SearchError
 
     with patch("cortex.searcher.search", side_effect=SearchError("fail")):
@@ -151,10 +151,10 @@ def test_cmd_init_with_entities_zero_total(mock_config_cls, tmp_path, capsys):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_mine_projects_mode(mock_config_cls):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
     args = argparse.Namespace(
         dir="/src",
-        palace=None,
+        cortex=None,
         mode="projects",
         wing=None,
         agent="cortex",
@@ -168,7 +168,7 @@ def test_cmd_mine_projects_mode(mock_config_cls):
         cmd_mine(args)
         mock_mine.assert_called_once_with(
             project_dir="/src",
-            palace_path="/fake/palace",
+            cortex_path="/fake/cortex",
             wing_override=None,
             agent="cortex",
             limit=0,
@@ -180,10 +180,10 @@ def test_cmd_mine_projects_mode(mock_config_cls):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_mine_convos_mode(mock_config_cls):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
     args = argparse.Namespace(
         dir="/chats",
-        palace=None,
+        cortex=None,
         mode="convos",
         wing="mywing",
         agent="me",
@@ -197,7 +197,7 @@ def test_cmd_mine_convos_mode(mock_config_cls):
         cmd_mine(args)
         mock_mine.assert_called_once_with(
             convo_dir="/chats",
-            palace_path="/fake/palace",
+            cortex_path="/fake/cortex",
             wing="mywing",
             agent="me",
             limit=10,
@@ -208,10 +208,10 @@ def test_cmd_mine_convos_mode(mock_config_cls):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_mine_include_ignored_comma_split(mock_config_cls):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
     args = argparse.Namespace(
         dir="/src",
-        palace=None,
+        cortex=None,
         mode="projects",
         wing=None,
         agent="cortex",
@@ -233,8 +233,8 @@ def test_cmd_mine_include_ignored_comma_split(mock_config_cls):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_wakeup(mock_config_cls, capsys):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
-    args = argparse.Namespace(palace=None, wing=None)
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
+    args = argparse.Namespace(cortex=None, wing=None)
     mock_stack = MagicMock()
     mock_stack.wake_up.return_value = "Hello world context"
     with patch("cortex.layers.MemoryStack", return_value=mock_stack):
@@ -335,24 +335,24 @@ def test_mcp_command_prints_setup_guidance(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "Cortex MCP quick setup:" in captured.out
     assert "claude mcp add cortex -- python -m cortex.mcp_server" in captured.out
-    assert "\nOptional custom palace:\n" in captured.out
-    assert "python -m cortex.mcp_server --palace /path/to/palace" in captured.out
-    assert "[--palace /path/to/palace]" not in captured.out
+    assert "\nOptional custom cortex:\n" in captured.out
+    assert "python -m cortex.mcp_server --cortex /path/to/cortex" in captured.out
+    assert "[--cortex /path/to/cortex]" not in captured.out
     assert captured.err == ""
 
 
-def test_mcp_command_uses_custom_palace_path_when_provided(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["cortex", "--palace", "~/tmp/my palace", "mcp"])
+def test_mcp_command_uses_custom_cortex_path_when_provided(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["cortex", "--cortex", "~/tmp/my cortex", "mcp"])
 
     main()
 
     captured = capsys.readouterr()
-    expanded = str(Path("~/tmp/my palace").expanduser())
+    expanded = str(Path("~/tmp/my cortex").expanduser())
 
-    assert "python -m cortex.mcp_server --palace" in captured.out
+    assert "python -m cortex.mcp_server --cortex" in captured.out
     assert expanded in captured.out
-    assert "Optional custom palace:" not in captured.out
-    assert "[--palace /path/to/palace]" not in captured.out
+    assert "Optional custom cortex:" not in captured.out
+    assert "[--cortex /path/to/cortex]" not in captured.out
     assert captured.err == ""
 
 
@@ -413,22 +413,22 @@ def test_main_compress_dispatches():
 
 
 @patch("cortex.cli.CortexConfig")
-def test_cmd_repair_no_palace(mock_config_cls, tmp_path, capsys):
-    mock_config_cls.return_value.palace_path = str(tmp_path / "nonexistent")
-    args = argparse.Namespace(palace=None)
+def test_cmd_repair_no_cortex(mock_config_cls, tmp_path, capsys):
+    mock_config_cls.return_value.cortex_path = str(tmp_path / "nonexistent")
+    args = argparse.Namespace(cortex=None)
     mock_chromadb = MagicMock()
     with patch.dict("sys.modules", {"chromadb": mock_chromadb}):
         cmd_repair(args)
     out = capsys.readouterr().out
-    assert "No palace found" in out
+    assert "No cortex found" in out
 
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_repair_error_reading(mock_config_cls, tmp_path, capsys):
-    palace_dir = tmp_path / "palace"
-    palace_dir.mkdir()
-    mock_config_cls.return_value.palace_path = str(palace_dir)
-    args = argparse.Namespace(palace=None)
+    cortex_dir = tmp_path / "cortex"
+    cortex_dir.mkdir()
+    mock_config_cls.return_value.cortex_path = str(cortex_dir)
+    args = argparse.Namespace(cortex=None)
     mock_chromadb = MagicMock()
     mock_client = MagicMock()
     mock_client.get_collection.side_effect = Exception("corrupt db")
@@ -436,15 +436,15 @@ def test_cmd_repair_error_reading(mock_config_cls, tmp_path, capsys):
     with patch.dict("sys.modules", {"chromadb": mock_chromadb}):
         cmd_repair(args)
     out = capsys.readouterr().out
-    assert "Error reading palace" in out
+    assert "Error reading cortex" in out
 
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_repair_zero_drawers(mock_config_cls, tmp_path, capsys):
-    palace_dir = tmp_path / "palace"
-    palace_dir.mkdir()
-    mock_config_cls.return_value.palace_path = str(palace_dir)
-    args = argparse.Namespace(palace=None)
+    cortex_dir = tmp_path / "cortex"
+    cortex_dir.mkdir()
+    mock_config_cls.return_value.cortex_path = str(cortex_dir)
+    args = argparse.Namespace(cortex=None)
     mock_chromadb = MagicMock()
     mock_col = MagicMock()
     mock_col.count.return_value = 0
@@ -459,10 +459,10 @@ def test_cmd_repair_zero_drawers(mock_config_cls, tmp_path, capsys):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_repair_success(mock_config_cls, tmp_path, capsys):
-    palace_dir = tmp_path / "palace"
-    palace_dir.mkdir()
-    mock_config_cls.return_value.palace_path = str(palace_dir)
-    args = argparse.Namespace(palace=None)
+    cortex_dir = tmp_path / "cortex"
+    cortex_dir.mkdir()
+    mock_config_cls.return_value.cortex_path = str(cortex_dir)
+    args = argparse.Namespace(cortex=None)
     mock_chromadb = MagicMock()
     mock_col = MagicMock()
     mock_col.count.return_value = 2
@@ -487,11 +487,11 @@ def test_cmd_repair_success(mock_config_cls, tmp_path, capsys):
 
 
 @patch("cortex.cli.CortexConfig")
-def test_cmd_compress_no_palace(mock_config_cls, capsys):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
-    args = argparse.Namespace(palace=None, wing=None, dry_run=False, config=None)
+def test_cmd_compress_no_cortex(mock_config_cls, capsys):
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
+    args = argparse.Namespace(cortex=None, wing=None, dry_run=False, config=None)
     mock_chromadb = MagicMock()
-    mock_chromadb.PersistentClient.side_effect = Exception("no palace")
+    mock_chromadb.PersistentClient.side_effect = Exception("no cortex")
     with (
         patch.dict("sys.modules", {"chromadb": mock_chromadb}),
         pytest.raises(SystemExit),
@@ -501,8 +501,8 @@ def test_cmd_compress_no_palace(mock_config_cls, capsys):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_compress_no_drawers(mock_config_cls, capsys):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
-    args = argparse.Namespace(palace=None, wing="mywing", dry_run=False, config=None)
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
+    args = argparse.Namespace(cortex=None, wing="mywing", dry_run=False, config=None)
     mock_chromadb = MagicMock()
     mock_col = MagicMock()
     mock_col.get.return_value = {"documents": [], "metadatas": [], "ids": []}
@@ -526,8 +526,8 @@ def _make_mock_dialect_module(dialect_instance):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_compress_dry_run(mock_config_cls, capsys):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
-    args = argparse.Namespace(palace=None, wing=None, dry_run=True, config=None)
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
+    args = argparse.Namespace(cortex=None, wing=None, dry_run=True, config=None)
     mock_chromadb = MagicMock()
     mock_col = MagicMock()
     mock_col.get.side_effect = [
@@ -568,10 +568,10 @@ def test_cmd_compress_dry_run(mock_config_cls, capsys):
 
 @patch("cortex.cli.CortexConfig")
 def test_cmd_compress_with_config(mock_config_cls, tmp_path, capsys):
-    mock_config_cls.return_value.palace_path = "/fake/palace"
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
     config_file = tmp_path / "entities.json"
     config_file.write_text('{"people": [], "projects": []}')
-    args = argparse.Namespace(palace=None, wing=None, dry_run=True, config=str(config_file))
+    args = argparse.Namespace(cortex=None, wing=None, dry_run=True, config=str(config_file))
     mock_chromadb = MagicMock()
     mock_col = MagicMock()
     mock_col.get.return_value = {"documents": [], "metadatas": [], "ids": []}
@@ -597,8 +597,8 @@ def test_cmd_compress_with_config(mock_config_cls, tmp_path, capsys):
 @patch("cortex.cli.CortexConfig")
 def test_cmd_compress_stores_results(mock_config_cls, capsys):
     """Non-dry-run compress stores to cortex_compressed collection."""
-    mock_config_cls.return_value.palace_path = "/fake/palace"
-    args = argparse.Namespace(palace=None, wing=None, dry_run=False, config=None)
+    mock_config_cls.return_value.cortex_path = "/fake/cortex"
+    args = argparse.Namespace(cortex=None, wing=None, dry_run=False, config=None)
     mock_chromadb = MagicMock()
     mock_col = MagicMock()
     mock_col.get.side_effect = [
@@ -640,13 +640,13 @@ def test_cmd_compress_stores_results(mock_config_cls, capsys):
 
 
 def test_cmd_repair_trailing_slash_does_not_recurse():
-    """Repair with trailing slash should put backup outside palace dir (#395)."""
+    """Repair with trailing slash should put backup outside cortex dir (#395)."""
     import os
 
-    args = argparse.Namespace(palace="/tmp/fake_palace/")
+    args = argparse.Namespace(cortex="/tmp/fake_cortex/")
     with patch("cortex.cli.os.path.isdir", return_value=False):
         cmd_repair(args)
-    # Verify the rstrip logic: palace_path should not end with separator
-    palace_path = os.path.expanduser(args.palace).rstrip(os.sep)
-    backup_path = palace_path + ".backup"
-    assert not backup_path.startswith(palace_path + os.sep)
+    # Verify the rstrip logic: cortex_path should not end with separator
+    cortex_path = os.path.expanduser(args.cortex).rstrip(os.sep)
+    backup_path = cortex_path + ".backup"
+    assert not backup_path.startswith(cortex_path + os.sep)

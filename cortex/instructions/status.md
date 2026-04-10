@@ -1,17 +1,17 @@
 # Cortex Status
 
-Display the current state of the user's memory palace.
+Display the current state of the user's memory Cortex.
 
-## Step 1: Gather Palace Status
+## Step 1: Gather Cortex Status
 
 Check if MCP tools are available (look for cortex_status in available tools).
 
-- If MCP is available: Call the cortex_status tool to retrieve palace state.
+- If MCP is available: Call the cortex_status tool to retrieve Cortex state.
 - If MCP is not available: Run the CLI command: cortex status
 
 ## Step 2: Display Wing/Room/Drawer Counts
 
-Present the palace structure counts clearly:
+Present the Cortex structure counts clearly:
 - Number of wings
 - Number of rooms
 - Number of drawers
@@ -27,18 +27,18 @@ If MCP tools are available, also call:
 - cortex_graph_stats -- for connectivity information (connected components,
   average connections per entity)
 
-Present these alongside the palace counts in a unified summary.
+Present these alongside the Cortex counts in a unified summary.
 
 ## Step 4: Suggest Next Actions
 
 Based on the current state, suggest one relevant action:
 
-- Empty palace (zero memories): Suggest "Try /cortex:mine to add data from
+- Empty Cortex (zero memories): Suggest "Try /cortex:mine to add data from
   files, URLs, or text."
 - Has data but no knowledge graph (memories exist but KG stats show zero
   triples): Suggest "Consider adding knowledge graph triples for richer
   queries."
-- Healthy palace (has memories and KG data): Suggest "Use /cortex:search to
+- Healthy Cortex (has memories and KG data): Suggest "Use /cortex:search to
   query your memories."
 
 ## Output Style

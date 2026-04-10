@@ -7,7 +7,7 @@ import chromadb
 import yaml
 
 from cortex.miner import mine, scan_project
-from cortex.palace import file_already_mined
+from cortex.store import file_already_mined
 
 
 def write_file(path: Path, content: str):
@@ -41,10 +41,10 @@ def test_project_mining():
                 f,
             )
 
-        palace_path = project_root / "palace"
-        mine(str(project_root), str(palace_path))
+        cortex_path = project_root / "cortex"
+        mine(str(project_root), str(cortex_path))
 
-        client = chromadb.PersistentClient(path=str(palace_path))
+        client = chromadb.PersistentClient(path=str(cortex_path))
         col = client.get_collection("cortex_drawers")
         assert col.count() > 0
     finally:
@@ -212,9 +212,9 @@ def test_scan_project_skip_dirs_still_apply_without_override():
 def test_file_already_mined_check_mtime():
     tmpdir = tempfile.mkdtemp()
     try:
-        palace_path = os.path.join(tmpdir, "palace")
-        os.makedirs(palace_path)
-        client = chromadb.PersistentClient(path=palace_path)
+        cortex_path = os.path.join(tmpdir, "cortex")
+        os.makedirs(cortex_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_or_create_collection("cortex_drawers")
 
         test_file = os.path.join(tmpdir, "test.txt")

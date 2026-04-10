@@ -6,7 +6,7 @@ Two ways to ingest:
   Projects:      cortex mine ~/projects/my_app          (code, docs, notes)
   Conversations: cortex mine ~/chats/ --mode convos     (Claude, ChatGPT, Slack)
 
-Same palace. Same search. Different ingest strategies.
+Same cortex. Same search. Different ingest strategies.
 
 Commands:
     cortex init <dir>                  Detect rooms from folder structure
@@ -66,7 +66,7 @@ def cmd_init(args):
 
 
 def cmd_mine(args):
-    palace_path = os.path.expanduser(args.palace) if args.palace else CortexConfig().palace_path
+    cortex_path = os.path.expanduser(args.cortex) if args.cortex else CortexConfig().cortex_path
     include_ignored = []
     for raw in args.include_ignored or []:
         include_ignored.extend(part.strip() for part in raw.split(",") if part.strip())
@@ -76,7 +76,7 @@ def cmd_mine(args):
 
         mine_convos(
             convo_dir=args.dir,
-            palace_path=palace_path,
+            cortex_path=cortex_path,
             wing=args.wing,
             agent=args.agent,
             limit=args.limit,
@@ -88,7 +88,7 @@ def cmd_mine(args):
 
         mine(
             project_dir=args.dir,
-            palace_path=palace_path,
+            cortex_path=cortex_path,
             wing_override=args.wing,
             agent=args.agent,
             limit=args.limit,
@@ -107,11 +107,11 @@ def cmd_search(args):
         print("  Use: cortex mcp  (to set up MCP for your AI client)")
         return
 
-    palace_path = os.path.expanduser(args.palace) if args.palace else CortexConfig().palace_path
+    cortex_path = os.path.expanduser(args.cortex) if args.cortex else CortexConfig().cortex_path
     try:
         search(
             query=args.query,
-            palace_path=palace_path,
+            cortex_path=cortex_path,
             wing=args.wing,
             room=args.room,
             n_results=args.results,
@@ -143,8 +143,8 @@ def cmd_wakeup(args):
     """Show L0 (identity) + L1 (essential story) — the wake-up context."""
     from .layers import MemoryStack
 
-    palace_path = os.path.expanduser(args.palace) if args.palace else CortexConfig().palace_path
-    stack = MemoryStack(palace_path=palace_path)
+    cortex_path = os.path.expanduser(args.cortex) if args.cortex else CortexConfig().cortex_path
+    stack = MemoryStack(cortex_path=cortex_path)
 
     text = stack.wake_up(wing=args.wing)
     tokens = len(text) // 4
@@ -178,35 +178,35 @@ def cmd_split(args):
 def cmd_status(args):
     from .miner import status
 
-    palace_path = os.path.expanduser(args.palace) if args.palace else CortexConfig().palace_path
-    status(palace_path=palace_path)
+    cortex_path = os.path.expanduser(args.cortex) if args.cortex else CortexConfig().cortex_path
+    status(cortex_path=cortex_path)
 
 
 def cmd_repair(args):
-    """Rebuild palace vector index from SQLite metadata."""
+    """Rebuild cortex vector index from SQLite metadata."""
     import chromadb
     import shutil
 
-    palace_path = os.path.expanduser(args.palace) if args.palace else CortexConfig().palace_path
+    cortex_path = os.path.expanduser(args.cortex) if args.cortex else CortexConfig().cortex_path
 
-    if not os.path.isdir(palace_path):
-        print(f"\n  No palace found at {palace_path}")
+    if not os.path.isdir(cortex_path):
+        print(f"\n  No cortex found at {cortex_path}")
         return
 
     print(f"\n{'=' * 55}")
     print("  Cortex Repair")
     print(f"{'=' * 55}\n")
-    print(f"  Palace: {palace_path}")
+    print(f"  Cortex: {cortex_path}")
 
     # Try to read existing drawers
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_collection("cortex_drawers")
         total = col.count()
         print(f"  Drawers found: {total}")
     except Exception as e:
-        print(f"  Error reading palace: {e}")
-        print("  Cannot recover — palace may need to be re-mined from source files.")
+        print(f"  Error reading cortex: {e}")
+        print("  Cannot recover — cortex may need to be re-mined from source files.")
         return
 
     if total == 0:
@@ -229,12 +229,12 @@ def cmd_repair(args):
     print(f"  Extracted {len(all_ids)} drawers")
 
     # Backup and rebuild
-    palace_path = palace_path.rstrip(os.sep)
-    backup_path = palace_path + ".backup"
+    cortex_path = cortex_path.rstrip(os.sep)
+    backup_path = cortex_path + ".backup"
     if os.path.exists(backup_path):
         shutil.rmtree(backup_path)
     print(f"  Backing up to {backup_path}...")
-    shutil.copytree(palace_path, backup_path)
+    shutil.copytree(cortex_path, backup_path)
 
     print("  Rebuilding collection...")
     client.delete_collection("cortex_drawers")
@@ -272,9 +272,9 @@ def cmd_mcp(args):
     """Show how to wire Cortex into MCP-capable hosts."""
     base_server_cmd = "python -m cortex.mcp_server"
 
-    if args.palace:
-        resolved_palace = str(Path(args.palace).expanduser())
-        server_cmd = f"{base_server_cmd} --palace {shlex.quote(resolved_palace)}"
+    if args.cortex:
+        resolved_cortex = str(Path(args.cortex).expanduser())
+        server_cmd = f"{base_server_cmd} --cortex {shlex.quote(resolved_cortex)}"
     else:
         server_cmd = base_server_cmd
 
@@ -283,10 +283,10 @@ def cmd_mcp(args):
     print("\nRun the server directly:")
     print(f"  {server_cmd}")
 
-    if not args.palace:
-        print("\nOptional custom palace:")
-        print(f"  claude mcp add cortex -- {base_server_cmd} --palace /path/to/palace")
-        print(f"  {base_server_cmd} --palace /path/to/palace")
+    if not args.cortex:
+        print("\nOptional custom cortex:")
+        print(f"  claude mcp add cortex -- {base_server_cmd} --cortex /path/to/cortex")
+        print(f"  {base_server_cmd} --cortex /path/to/cortex")
 
 
 def cmd_compress(args):
@@ -294,12 +294,12 @@ def cmd_compress(args):
     import chromadb
     from .dialect import Dialect
 
-    palace_path = os.path.expanduser(args.palace) if args.palace else CortexConfig().palace_path
+    cortex_path = os.path.expanduser(args.cortex) if args.cortex else CortexConfig().cortex_path
 
     # Load dialect (with optional entity config)
     config_path = args.config
     if not config_path:
-        for candidate in ["entities.json", os.path.join(palace_path, "entities.json")]:
+        for candidate in ["entities.json", os.path.join(cortex_path, "entities.json")]:
             if os.path.exists(candidate):
                 config_path = candidate
                 break
@@ -310,12 +310,12 @@ def cmd_compress(args):
     else:
         dialect = Dialect()
 
-    # Connect to palace
+    # Connect to cortex
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_collection("cortex_drawers")
     except Exception:
-        print(f"\n  No palace found at {palace_path}")
+        print(f"\n  No cortex found at {cortex_path}")
         print("  Run: cortex init <dir> then cortex mine <dir>")
         sys.exit(1)
 
@@ -417,9 +417,9 @@ def main():
         epilog=__doc__,
     )
     parser.add_argument(
-        "--palace",
+        "--cortex",
         default=None,
-        help="Where the palace lives (default: from ~/.cortex/config.json or ~/.cortex/palace)",
+        help="Where the cortex lives (default: from ~/.cortex/config.json or ~/.cortex/data)",
     )
 
     sub = parser.add_subparsers(dest="command")
@@ -432,7 +432,7 @@ def main():
     )
 
     # mine
-    p_mine = sub.add_parser("mine", help="Mine files into the palace")
+    p_mine = sub.add_parser("mine", help="Mine files into the cortex")
     p_mine.add_argument("dir", help="Directory to mine")
     p_mine.add_argument(
         "--mode",
@@ -547,7 +547,7 @@ def main():
     # repair
     sub.add_parser(
         "repair",
-        help="Rebuild palace vector index from stored data (fixes segfaults after corruption)",
+        help="Rebuild cortex vector index from stored data (fixes segfaults after corruption)",
     )
 
     # mcp

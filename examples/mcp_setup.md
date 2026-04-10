@@ -18,9 +18,9 @@ claude mcp add cortex -- python -m cortex.mcp_server
 
 The server exposes the full Cortex MCP toolset. Common entry points include:
 
-- **cortex_status** — palace stats (wings, rooms, drawer counts)
+- **cortex_status** — cortex stats (wings, rooms, drawer counts)
 - **cortex_search** — semantic search across all memories
-- **cortex_list_wings** — list all projects in the palace
+- **cortex_list_wings** — list all projects in the cortex
 
 ## Usage in Claude Code
 

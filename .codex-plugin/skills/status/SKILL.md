@@ -1,6 +1,6 @@
 ---
 name: status
-description: Show Cortex status — room counts, storage usage, and palace health.
+description: Show Cortex status — room counts, storage usage, and cortex health.
 allowed-tools: Bash, Read
 ---
 

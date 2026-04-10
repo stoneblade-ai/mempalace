@@ -1,6 +1,6 @@
 # Cortex Claude Code Plugin
 
-A Claude Code plugin that gives your AI a persistent memory system. Mine projects and conversations into a searchable palace backed by ChromaDB, with 19 MCP tools, auto-save hooks, and 5 guided skills.
+A Claude Code plugin that gives your AI a persistent memory system. Mine projects and conversations into a searchable cortex backed by ChromaDB, with 19 MCP tools, auto-save hooks, and 5 guided skills.
 
 ## Prerequisites
 
@@ -35,9 +35,9 @@ After installing the plugin, run the init command to complete setup (pip install
 |---------|-------------|
 | `/cortex:help` | Show available tools, skills, and architecture |
 | `/cortex:init` | Set up Cortex -- install, configure MCP, onboard |
-| `/cortex:search` | Search your memories across the palace |
-| `/cortex:mine` | Mine projects and conversations into the palace |
-| `/cortex:status` | Show palace overview -- wings, rooms, drawer counts |
+| `/cortex:search` | Search your memories across the cortex |
+| `/cortex:mine` | Mine projects and conversations into the cortex |
+| `/cortex:status` | Show cortex overview -- wings, rooms, drawer counts |
 
 ## Hooks
 

@@ -2,7 +2,7 @@
 """
 searcher.py — Find anything. Exact words.
 
-Semantic search against the palace.
+Semantic search against the cortex.
 Returns verbatim text — the actual words, never summaries.
 """
 
@@ -15,21 +15,21 @@ logger = logging.getLogger("cortex_mcp")
 
 
 class SearchError(Exception):
-    """Raised when search cannot proceed (e.g. no palace found)."""
+    """Raised when search cannot proceed (e.g. no cortex found)."""
 
 
-def search(query: str, palace_path: str, wing: str = None, room: str = None, n_results: int = 5):
+def search(query: str, cortex_path: str, wing: str = None, room: str = None, n_results: int = 5):
     """
-    Search the palace. Returns verbatim drawer content.
+    Search the cortex. Returns verbatim drawer content.
     Optionally filter by wing (project) or room (aspect).
     """
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_collection("cortex_drawers")
     except Exception:
-        print(f"\n  No palace found at {palace_path}")
+        print(f"\n  No cortex found at {cortex_path}")
         print("  Run: cortex init <dir> then cortex mine <dir>")
-        raise SearchError(f"No palace found at {palace_path}")
+        raise SearchError(f"No cortex found at {cortex_path}")
 
     # Build where filter
     where = {}
@@ -91,19 +91,19 @@ def search(query: str, palace_path: str, wing: str = None, room: str = None, n_r
 
 
 def search_memories(
-    query: str, palace_path: str, wing: str = None, room: str = None, n_results: int = 5
+    query: str, cortex_path: str, wing: str = None, room: str = None, n_results: int = 5
 ) -> dict:
     """
     Programmatic search — returns a dict instead of printing.
     Used by the MCP server and other callers that need data.
     """
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_collection("cortex_drawers")
     except Exception as e:
-        logger.error("No palace found at %s: %s", palace_path, e)
+        logger.error("No cortex found at %s: %s", cortex_path, e)
         return {
-            "error": "No palace found",
+            "error": "No cortex found",
             "hint": "Run: cortex init <dir> && cortex mine <dir>",
         }
 

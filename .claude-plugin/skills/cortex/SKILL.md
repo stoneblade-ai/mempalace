@@ -1,12 +1,12 @@
 ---
 name: cortex
-description: Cortex — mine projects and conversations into a searchable memory palace. Use when asked about cortex, memory palace, mining memories, searching memories, or palace setup.
+description: Cortex — mine projects and conversations into a searchable memory cortex. Use when asked about cortex, memory cortex, mining memories, searching memories, or cortex setup.
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
 
 # Cortex
 
-A searchable memory palace for AI — mine projects and conversations, then search them semantically.
+A searchable memory cortex for AI — mine projects and conversations, then search them semantically.
 
 ## Prerequisites
 

@@ -6,7 +6,7 @@ layers.py — 4-Layer Memory Stack for cortex
 Load only what you need, when you need it.
 
     Layer 0: Identity       (~100 tokens)   — Always loaded. "Who am I?"
-    Layer 1: Essential Story (~500-800)      — Always loaded. Top moments from the palace.
+    Layer 1: Essential Story (~500-800)      — Always loaded. Top moments from the cortex.
     Layer 2: On-Demand      (~200-500 each)  — Loaded when a topic/wing comes up.
     Layer 3: Deep Search    (unlimited)      — Full ChromaDB semantic search.
 
@@ -69,32 +69,32 @@ class Layer0:
 
 
 # ---------------------------------------------------------------------------
-# Layer 1 — Essential Story (auto-generated from palace)
+# Layer 1 — Essential Story (auto-generated from cortex)
 # ---------------------------------------------------------------------------
 
 
 class Layer1:
     """
     ~500-800 tokens. Always loaded.
-    Auto-generated from the highest-weight / most-recent drawers in the palace.
+    Auto-generated from the highest-weight / most-recent drawers in the cortex.
     Groups by room, picks the top N moments, compresses to a compact summary.
     """
 
     MAX_DRAWERS = 15  # at most 15 moments in wake-up
     MAX_CHARS = 3200  # hard cap on total L1 text (~800 tokens)
 
-    def __init__(self, palace_path: str = None, wing: str = None):
+    def __init__(self, cortex_path: str = None, wing: str = None):
         cfg = CortexConfig()
-        self.palace_path = palace_path or cfg.palace_path
+        self.cortex_path = cortex_path or cfg.cortex_path
         self.wing = wing
 
     def generate(self) -> str:
         """Pull top drawers from ChromaDB and format as compact L1 text."""
         try:
-            client = chromadb.PersistentClient(path=self.palace_path)
+            client = chromadb.PersistentClient(path=self.cortex_path)
             col = client.get_collection("cortex_drawers")
         except Exception:
-            return "## L1 — No palace found. Run: cortex mine <dir>"
+            return "## L1 — No cortex found. Run: cortex mine <dir>"
 
         # Fetch all drawers in batches to avoid SQLite variable limit (~999)
         _BATCH = 500
@@ -189,17 +189,17 @@ class Layer2:
     Queries ChromaDB with a wing/room filter.
     """
 
-    def __init__(self, palace_path: str = None):
+    def __init__(self, cortex_path: str = None):
         cfg = CortexConfig()
-        self.palace_path = palace_path or cfg.palace_path
+        self.cortex_path = cortex_path or cfg.cortex_path
 
     def retrieve(self, wing: str = None, room: str = None, n_results: int = 10) -> str:
         """Retrieve drawers filtered by wing and/or room."""
         try:
-            client = chromadb.PersistentClient(path=self.palace_path)
+            client = chromadb.PersistentClient(path=self.cortex_path)
             col = client.get_collection("cortex_drawers")
         except Exception:
-            return "No palace found."
+            return "No cortex found."
 
         where = {}
         if wing and room:
@@ -249,21 +249,21 @@ class Layer2:
 
 class Layer3:
     """
-    Unlimited depth. Semantic search against the full palace.
+    Unlimited depth. Semantic search against the full cortex.
     Reuses searcher.py logic against cortex_drawers.
     """
 
-    def __init__(self, palace_path: str = None):
+    def __init__(self, cortex_path: str = None):
         cfg = CortexConfig()
-        self.palace_path = palace_path or cfg.palace_path
+        self.cortex_path = cortex_path or cfg.cortex_path
 
     def search(self, query: str, wing: str = None, room: str = None, n_results: int = 5) -> str:
         """Semantic search, returns compact result text."""
         try:
-            client = chromadb.PersistentClient(path=self.palace_path)
+            client = chromadb.PersistentClient(path=self.cortex_path)
             col = client.get_collection("cortex_drawers")
         except Exception:
-            return "No palace found."
+            return "No cortex found."
 
         where = {}
         if wing and room:
@@ -316,7 +316,7 @@ class Layer3:
     ) -> list:
         """Return raw dicts instead of formatted text."""
         try:
-            client = chromadb.PersistentClient(path=self.palace_path)
+            client = chromadb.PersistentClient(path=self.cortex_path)
             col = client.get_collection("cortex_drawers")
         except Exception:
             return []
@@ -368,7 +368,7 @@ class Layer3:
 
 class MemoryStack:
     """
-    The full 4-layer stack. One class, one palace, everything works.
+    The full 4-layer stack. One class, one cortex, everything works.
 
         stack = MemoryStack()
         print(stack.wake_up())                # L0 + L1 (~600-900 tokens)
@@ -376,15 +376,15 @@ class MemoryStack:
         print(stack.search("pricing change"))  # L3 deep search
     """
 
-    def __init__(self, palace_path: str = None, identity_path: str = None):
+    def __init__(self, cortex_path: str = None, identity_path: str = None):
         cfg = CortexConfig()
-        self.palace_path = palace_path or cfg.palace_path
+        self.cortex_path = cortex_path or cfg.cortex_path
         self.identity_path = identity_path or os.path.expanduser("~/.cortex/identity.txt")
 
         self.l0 = Layer0(self.identity_path)
-        self.l1 = Layer1(self.palace_path)
-        self.l2 = Layer2(self.palace_path)
-        self.l3 = Layer3(self.palace_path)
+        self.l1 = Layer1(self.cortex_path)
+        self.l2 = Layer2(self.cortex_path)
+        self.l3 = Layer3(self.cortex_path)
 
     def wake_up(self, wing: str = None) -> str:
         """
@@ -418,14 +418,14 @@ class MemoryStack:
     def status(self) -> dict:
         """Status of all layers."""
         result = {
-            "palace_path": self.palace_path,
+            "cortex_path": self.cortex_path,
             "L0_identity": {
                 "path": self.identity_path,
                 "exists": os.path.exists(self.identity_path),
                 "tokens": self.l0.token_estimate(),
             },
             "L1_essential": {
-                "description": "Auto-generated from top palace drawers",
+                "description": "Auto-generated from top cortex drawers",
             },
             "L2_on_demand": {
                 "description": "Wing/room filtered retrieval",
@@ -437,7 +437,7 @@ class MemoryStack:
 
         # Count drawers
         try:
-            client = chromadb.PersistentClient(path=self.palace_path)
+            client = chromadb.PersistentClient(path=self.cortex_path)
             col = client.get_collection("cortex_drawers")
             count = col.count()
             result["total_drawers"] = count
@@ -480,8 +480,8 @@ if __name__ == "__main__":
         elif not arg.startswith("--"):
             positional.append(arg)
 
-    palace_path = flags.get("palace")
-    stack = MemoryStack(palace_path=palace_path)
+    cortex_path = flags.get("cortex")
+    stack = MemoryStack(cortex_path=cortex_path)
 
     if cmd in ("wake-up", "wakeup"):
         wing = flags.get("wing")

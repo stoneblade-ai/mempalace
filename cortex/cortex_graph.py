@@ -1,8 +1,8 @@
 """
-palace_graph.py — Graph traversal layer for Cortex
+cortex_graph.py — Graph traversal layer for Cortex
 ======================================================
 
-Builds a navigable graph from the palace structure:
+Builds a navigable graph from the cortex structure:
   - Nodes = rooms (named ideas)
   - Edges = shared rooms across wings (tunnels)
   - Edge types = halls (the corridors)
@@ -24,7 +24,7 @@ import chromadb
 def _get_collection(config=None):
     config = config or CortexConfig()
     try:
-        client = chromadb.PersistentClient(path=config.palace_path)
+        client = chromadb.PersistentClient(path=config.cortex_path)
         return client.get_collection(config.collection_name)
     except Exception:
         return None
@@ -32,7 +32,7 @@ def _get_collection(config=None):
 
 def build_graph(col=None, config=None):
     """
-    Build the palace graph from ChromaDB metadata.
+    Build the cortex graph from ChromaDB metadata.
 
     Returns:
         nodes: dict of {room: {wings: set, halls: set, count: int}}
@@ -191,7 +191,7 @@ def find_tunnels(wing_a: str = None, wing_b: str = None, col=None, config=None):
 
 
 def graph_stats(col=None, config=None):
-    """Summary statistics about the palace graph."""
+    """Summary statistics about the cortex graph."""
     nodes, edges = build_graph(col, config)
 
     tunnel_rooms = sum(1 for n in nodes.values() if len(n["wings"]) >= 2)

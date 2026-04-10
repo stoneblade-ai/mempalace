@@ -12,7 +12,7 @@ Every conversation you have with an AI — every decision, every debugging sessi
 
 Other memory systems try to fix this by letting AI decide what's worth remembering. It extracts "user prefers Postgres" and throws away the conversation where you explained *why*. Cortex takes a different approach: **store everything, then make it findable.**
 
-**The Palace** — Ancient Greek orators memorized entire speeches by placing ideas in rooms of an imaginary building. Walk through the building, find the idea. Cortex applies the same principle to AI memory: your conversations are organized into wings (people and projects), halls (types of memory), and rooms (specific ideas). No AI decides what matters — you keep every word, and the structure gives you a navigable map instead of a flat search index.
+**The Cortex** — Ancient Greek orators memorized entire speeches by placing ideas in rooms of an imaginary building. Walk through the building, find the idea. Cortex applies the same principle to AI memory: your conversations are organized into wings (people and projects), halls (types of memory), and rooms (specific ideas). No AI decides what matters — you keep every word, and the structure gives you a navigable map instead of a flat search index.
 
 **Raw verbatim storage** — Cortex stores your actual exchanges in ChromaDB without summarization or extraction. The 96.6% LongMemEval result comes from this raw mode. We don't burn an LLM to decide what's "worth remembering" — we keep everything and let semantic search find it.
 
@@ -29,7 +29,7 @@ Other memory systems try to fix this by letting AI decide what's worth rememberi
 
 <br>
 
-[Quick Start](#quick-start) · [The Palace](#the-palace) · [AAAK Dialect](#aaak-dialect-experimental) · [Benchmarks](#benchmarks) · [MCP Tools](#mcp-server)
+[Quick Start](#quick-start) · [The Cortex](#the-cortex) · [AAAK Dialect](#aaak-dialect-experimental) · [Benchmarks](#benchmarks) · [MCP Tools](#mcp-server)
 
 <br>
 
@@ -59,7 +59,7 @@ Other memory systems try to fix this by letting AI decide what's worth rememberi
 >
 > - **"30x lossless compression" was overstated.** AAAK is a lossy abbreviation system (entity codes, sentence truncation). Independent benchmarks show AAAK mode scores **84.2% R@5 vs raw mode's 96.6%** on LongMemEval — a 12.4 point regression. The honest framing is: AAAK is an experimental compression layer that trades fidelity for token density, and **the 96.6% headline number is from RAW mode, not AAAK**.
 >
-> - **"+34% palace boost" was misleading.** That number compares unfiltered search to wing+room metadata filtering. Metadata filtering is a standard ChromaDB feature, not a novel retrieval mechanism. Real and useful, but not a moat.
+> - **"+34% cortex boost" was misleading.** That number compares unfiltered search to wing+room metadata filtering. Metadata filtering is a standard ChromaDB feature, not a novel retrieval mechanism. Real and useful, but not a moat.
 >
 > - **"Contradiction detection"** exists as a separate utility (`fact_checker.py`) but is not currently wired into the knowledge graph operations as the README implied.
 >
@@ -162,7 +162,7 @@ Or use the Python API:
 
 ```python
 from cortex.searcher import search_memories
-results = search_memories("auth decisions", palace_path="~/.cortex/palace")
+results = search_memories("auth decisions", cortex_path="~/.cortex/data")
 # Inject into your local model's context
 ```
 
@@ -189,11 +189,11 @@ Cortex loads 170 tokens of critical facts on wake-up — your team, your project
 
 ## How It Works
 
-### The Palace
+### The Cortex
 
 The layout is fairly simple, though it took a long time to get there.
 
-It starts with a **wing**. Every project, person, or topic you're filing gets its own wing in the palace.
+It starts with a **wing**. Every project, person, or topic you're filing gets its own wing in the cortex.
 
 Each wing has **rooms** connected to it, where information is divided into subjects that relate to that wing — so every room is a different element of what your project contains. Project ideas could be one room, employees could be another, financial statements another. There can be an endless number of rooms that split the wing into sections. The Cortex install detects these for you automatically, and of course you can personalize it any way you feel is right.
 
@@ -270,7 +270,7 @@ Search wing + hall:          84.8%  (+24%)
 Search wing + room:          94.8%  (+34%)
 ```
 
-Wings and rooms aren't cosmetic. They're a **34% retrieval improvement**. The palace structure is the product.
+Wings and rooms aren't cosmetic. They're a **34% retrieval improvement**. The cortex structure is the product.
 
 ### The Memory Stack
 
@@ -410,7 +410,7 @@ Now queries for Kai's current work won't return Orion. Historical queries still 
 
 ## Specialist Agents
 
-Create agents that focus on specific areas. Each agent gets its own wing and diary in the palace — not in your CLAUDE.md. Add 50 agents, your config stays the same size.
+Create agents that focus on specific areas. Each agent gets its own wing and diary in the cortex — not in your CLAUDE.md. Add 50 agents, your config stays the same size.
 
 ```
 ~/.cortex/agents/
@@ -425,7 +425,7 @@ Your CLAUDE.md just needs one line:
 You have Cortex agents. Run cortex_list_agents to see them.
 ```
 
-The AI discovers its agents from the palace at runtime. Each agent:
+The AI discovers its agents from the cortex at runtime. Each agent:
 
 - **Has a focus** — what it pays attention to
 - **Keeps a diary** — written in AAAK, persists across sessions
@@ -460,11 +460,11 @@ claude mcp add cortex -- python -m cortex.mcp_server
 
 ### 19 Tools
 
-**Palace (read)**
+**Cortex (read)**
 
 | Tool | What |
 |------|------|
-| `cortex_status` | Palace overview + AAAK spec + memory protocol |
+| `cortex_status` | Cortex overview + AAAK spec + memory protocol |
 | `cortex_list_wings` | Wings with counts |
 | `cortex_list_rooms` | Rooms within a wing |
 | `cortex_get_taxonomy` | Full wing → room → count tree |
@@ -472,7 +472,7 @@ claude mcp add cortex -- python -m cortex.mcp_server
 | `cortex_check_duplicate` | Check before filing |
 | `cortex_get_aaak_spec` | AAAK dialect reference |
 
-**Palace (write)**
+**Cortex (write)**
 
 | Tool | What |
 |------|------|
@@ -538,8 +538,8 @@ Tested on standard academic benchmarks — reproducible, published datasets.
 | **LongMemEval R@5** | Raw (ChromaDB only) | **96.6%** | Zero |
 | **LongMemEval R@5** | Hybrid + Haiku rerank | **100%** (500/500) | ~500 |
 | **LoCoMo R@10** | Raw, session level | **60.3%** | Zero |
-| **Personal palace R@10** | Heuristic bench | **85%** | Zero |
-| **Palace structure impact** | Wing+room filtering | **+34%** R@10 | Zero |
+| **Personal cortex R@10** | Heuristic bench | **85%** | Zero |
+| **Cortex structure impact** | Wing+room filtering | **+34%** R@10 | Zero |
 
 The 96.6% raw score is the highest published LongMemEval result requiring no API key, no cloud, and no LLM at any stage.
 
@@ -584,13 +584,13 @@ cortex wake-up --wing driftwood                # project-specific
 cortex compress --wing myapp                   # AAAK compress
 
 # Status
-cortex status                                  # palace overview
+cortex status                                  # cortex overview
 
 # MCP
 cortex mcp                                     # show MCP setup command
 ```
 
-All commands accept `--palace <path>` to override the default location.
+All commands accept `--cortex <path>` to override the default location.
 
 ---
 
@@ -600,7 +600,7 @@ All commands accept `--palace <path>` to override the default location.
 
 ```json
 {
-  "palace_path": "/custom/path/to/palace",
+  "cortex_path": "/custom/path/to/cortex",
   "collection_name": "cortex_drawers",
   "people_map": {"Kai": "KAI", "Priya": "PRI"}
 }
@@ -640,7 +640,7 @@ Plain text. Becomes Layer 0 — loaded every session.
 | `layers.py` | 4-layer memory stack |
 | `dialect.py` | AAAK compression — 30x lossless |
 | `knowledge_graph.py` | Temporal entity-relationship graph (SQLite) |
-| `palace_graph.py` | Room-based navigation graph |
+| `cortex_graph.py` | Room-based navigation graph |
 | `onboarding.py` | Guided setup — generates AAAK bootstrap + wing config |
 | `entity_registry.py` | Entity code registry |
 | `entity_detector.py` | Auto-detect people and projects from content |
@@ -659,7 +659,7 @@ cortex/
 │   ├── cli.py                 ← CLI entry point
 │   ├── mcp_server.py          ← MCP server (19 tools)
 │   ├── knowledge_graph.py     ← temporal entity graph
-│   ├── palace_graph.py        ← room navigation graph
+│   ├── cortex_graph.py        ← room navigation graph
 │   ├── dialect.py             ← AAAK compression
 │   ├── miner.py               ← project file ingest
 │   ├── convo_miner.py         ← conversation ingest

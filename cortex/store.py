@@ -1,5 +1,5 @@
 """
-palace.py — Shared palace operations.
+cortex.py — Shared cortex operations.
 
 Consolidates ChromaDB access patterns used by both miners and the MCP server.
 """
@@ -34,14 +34,14 @@ SKIP_DIRS = {
 }
 
 
-def get_collection(palace_path: str, collection_name: str = "cortex_drawers"):
-    """Get or create the palace ChromaDB collection."""
-    os.makedirs(palace_path, exist_ok=True)
+def get_collection(cortex_path: str, collection_name: str = "cortex_drawers"):
+    """Get or create the cortex ChromaDB collection."""
+    os.makedirs(cortex_path, exist_ok=True)
     try:
-        os.chmod(palace_path, 0o700)
+        os.chmod(cortex_path, 0o700)
     except (OSError, NotImplementedError):
         pass
-    client = chromadb.PersistentClient(path=palace_path)
+    client = chromadb.PersistentClient(path=cortex_path)
     try:
         return client.get_collection(collection_name)
     except Exception:
@@ -49,7 +49,7 @@ def get_collection(palace_path: str, collection_name: str = "cortex_drawers"):
 
 
 def file_already_mined(collection, source_file: str, check_mtime: bool = False) -> bool:
-    """Check if a file has already been filed in the palace.
+    """Check if a file has already been filed in the cortex.
 
     When check_mtime=True (used by project miner), returns False if the file
     has been modified since it was last mined, so it gets re-mined.

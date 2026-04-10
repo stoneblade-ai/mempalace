@@ -58,7 +58,7 @@ def sanitize_content(value: str, max_length: int = 100_000) -> str:
     return value
 
 
-DEFAULT_PALACE_PATH = os.path.expanduser("~/.cortex/palace")
+DEFAULT_CORTEX_PATH = os.path.expanduser("~/.cortex/data")
 DEFAULT_COLLECTION_NAME = "cortex_drawers"
 
 DEFAULT_TOPIC_WINGS = [
@@ -94,7 +94,7 @@ DEFAULT_HALL_KEYWORDS = {
         "exist",
         "alive",
     ],
-    "memory": ["memory", "remember", "forget", "recall", "archive", "palace", "store"],
+    "memory": ["memory", "remember", "forget", "recall", "archive", "cortex", "store"],
     "technical": [
         "code",
         "python",
@@ -140,12 +140,12 @@ class CortexConfig:
                 self._file_config = {}
 
     @property
-    def palace_path(self):
-        """Path to the memory palace data directory."""
-        env_val = os.environ.get("CORTEX_PALACE_PATH") or os.environ.get("CORTEX_PALACE_PATH")
+    def cortex_path(self):
+        """Path to the memory cortex data directory."""
+        env_val = os.environ.get("CORTEX_PATH")
         if env_val:
             return env_val
-        return self._file_config.get("palace_path", DEFAULT_PALACE_PATH)
+        return self._file_config.get("cortex_path", DEFAULT_CORTEX_PATH)
 
     @property
     def collection_name(self):
@@ -210,7 +210,7 @@ class CortexConfig:
             pass  # Windows doesn't support Unix permissions
         if not self._config_file.exists():
             default_config = {
-                "palace_path": DEFAULT_PALACE_PATH,
+                "cortex_path": DEFAULT_CORTEX_PATH,
                 "collection_name": DEFAULT_COLLECTION_NAME,
                 "topic_wings": DEFAULT_TOPIC_WINGS,
                 "hall_keywords": DEFAULT_HALL_KEYWORDS,

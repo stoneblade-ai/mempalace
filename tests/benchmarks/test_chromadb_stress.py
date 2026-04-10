@@ -13,7 +13,7 @@ import time
 import chromadb
 import pytest
 
-from tests.benchmarks.data_generator import PalaceDataGenerator
+from tests.benchmarks.data_generator import CortexDataGenerator
 from tests.benchmarks.report import record_metric
 
 
@@ -46,11 +46,11 @@ class TestGetAllMetadatasOOM:
     @pytest.mark.parametrize("n_drawers", SIZES)
     def test_get_all_metadatas_rss(self, n_drawers, tmp_path, bench_scale):
         """RSS growth from fetching all metadata at once."""
-        gen = PalaceDataGenerator(seed=42, scale=bench_scale)
-        palace_path = str(tmp_path / "palace")
-        gen.populate_palace_directly(palace_path, n_drawers=n_drawers, include_needles=False)
+        gen = CortexDataGenerator(seed=42, scale=bench_scale)
+        cortex_path = str(tmp_path / "cortex")
+        gen.populate_cortex_directly(cortex_path, n_drawers=n_drawers, include_needles=False)
 
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_collection("cortex_drawers")
 
         rss_before = _get_rss_mb()
@@ -74,11 +74,11 @@ class TestQueryDegradation:
 
     @pytest.mark.parametrize("n_drawers", SIZES)
     def test_query_latency_at_size(self, n_drawers, tmp_path, bench_scale):
-        gen = PalaceDataGenerator(seed=42, scale=bench_scale)
-        palace_path = str(tmp_path / "palace")
-        gen.populate_palace_directly(palace_path, n_drawers=n_drawers, include_needles=False)
+        gen = CortexDataGenerator(seed=42, scale=bench_scale)
+        cortex_path = str(tmp_path / "cortex")
+        gen.populate_cortex_directly(cortex_path, n_drawers=n_drawers, include_needles=False)
 
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_collection("cortex_drawers")
 
         queries = [
@@ -111,15 +111,15 @@ class TestBulkInsertPerformance:
     def test_sequential_vs_batched(self, tmp_path):
         """The current miner uses single-document add(). How much faster is batching?"""
         n_docs = 500
-        gen = PalaceDataGenerator(seed=42)
+        gen = CortexDataGenerator(seed=42)
 
         # Generate content
         contents = [gen._random_text(400, 800) for _ in range(n_docs)]
 
         # Sequential insertion (mimics add_drawer pattern)
-        palace_seq = str(tmp_path / "seq")
-        os.makedirs(palace_seq)
-        client_seq = chromadb.PersistentClient(path=palace_seq)
+        cortex_seq = str(tmp_path / "seq")
+        os.makedirs(cortex_seq)
+        client_seq = chromadb.PersistentClient(path=cortex_seq)
         col_seq = client_seq.get_or_create_collection("cortex_drawers")
 
         start = time.perf_counter()
@@ -132,9 +132,9 @@ class TestBulkInsertPerformance:
         sequential_ms = (time.perf_counter() - start) * 1000
 
         # Batched insertion
-        palace_batch = str(tmp_path / "batch")
-        os.makedirs(palace_batch)
-        client_batch = chromadb.PersistentClient(path=palace_batch)
+        cortex_batch = str(tmp_path / "batch")
+        os.makedirs(cortex_batch)
+        client_batch = chromadb.PersistentClient(path=cortex_batch)
         col_batch = client_batch.get_or_create_collection("cortex_drawers")
 
         batch_size = 100
@@ -169,13 +169,13 @@ class TestMaxCollectionSize:
 
     def test_incremental_growth(self, tmp_path, bench_scale):
         """Add drawers in batches, measure latency per batch."""
-        gen = PalaceDataGenerator(seed=42, scale=bench_scale)
+        gen = CortexDataGenerator(seed=42, scale=bench_scale)
         cfg = gen.cfg
         target = min(cfg["drawers"], 10_000)  # cap at 10K for this test
 
-        palace_path = str(tmp_path / "palace")
-        os.makedirs(palace_path)
-        client = chromadb.PersistentClient(path=palace_path)
+        cortex_path = str(tmp_path / "cortex")
+        os.makedirs(cortex_path)
+        client = chromadb.PersistentClient(path=cortex_path)
         col = client.get_or_create_collection("cortex_drawers")
 
         batch_size = 500

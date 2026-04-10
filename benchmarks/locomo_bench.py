@@ -7,8 +7,8 @@ Evaluates Cortex's retrieval against the LoCoMo benchmark.
 10 conversations, ~200 QA pairs across 5 categories.
 
 For each conversation:
-1. Ingest all sessions into a fresh Cortex palace
-2. For each QA pair, query the palace
+1. Ingest all sessions into a fresh Cortex cortex
+2. For each QA pair, query the cortex
 3. Score retrieval recall (did we find the evidence dialog?)
 4. Score F1 (optional, if --llm is provided)
 
@@ -156,7 +156,7 @@ def build_corpus_from_sessions(sessions, granularity="dialog"):
     granularity:
         'dialog'  — one doc per dialog turn (matches evidence format D1:3)
         'session' — one doc per session (all dialog text joined)
-        'rooms'   — one doc per session using pre-computed summary (palace room label)
+        'rooms'   — one doc per session using pre-computed summary (cortex room label)
     """
     corpus = []
     corpus_ids = []
@@ -368,12 +368,12 @@ def _name_boost(names, doc_text):
 
 
 # =============================================================================
-# PALACE MODE — LLM-assisted room assignment at index time
+# CORTEX MODE — LLM-assisted room assignment at index time
 # =============================================================================
 
 # Room taxonomy for LoCoMo-style personal conversations.
 # Broad enough to cover common life topics, specific enough to discriminate.
-PALACE_ROOMS = [
+CORTEX_ROOMS = [
     "identity_sexuality",  # gender identity, LGBTQ, self-discovery
     "career_education",  # jobs, research, school, studying, counseling
     "relationships_romance",  # dating, partners, romantic feelings
@@ -390,7 +390,7 @@ PALACE_ROOMS = [
     "general",  # catch-all for mixed/unclear sessions
 ]
 
-_PALACE_ROOM_LIST = "\n".join(f"  - {r}" for r in PALACE_ROOMS)
+_CORTEX_ROOM_LIST = "\n".join(f"  - {r}" for r in CORTEX_ROOMS)
 
 
 def _llm_call(prompt, api_key, model="claude-haiku-4-5-20251001", max_tokens=32):
@@ -421,23 +421,23 @@ def _llm_call(prompt, api_key, model="claude-haiku-4-5-20251001", max_tokens=32)
 
 
 def _assign_room(session_text, api_key, model="claude-haiku-4-5-20251001"):
-    """Ask LLM to assign a session to a palace room. Returns room name."""
+    """Ask LLM to assign a session to a cortex room. Returns room name."""
     snippet = session_text[:600].replace("\n", " ")
     prompt = (
         f"Read this conversation and assign it to exactly one room from the list below.\n"
         f"Reply with ONLY the room name, nothing else.\n\n"
-        f"Rooms:\n{_PALACE_ROOM_LIST}\n\n"
+        f"Rooms:\n{_CORTEX_ROOM_LIST}\n\n"
         f"Conversation:\n{snippet}"
     )
     raw = _llm_call(prompt, api_key, model=model, max_tokens=20)
     # Normalize: find the closest matching room name
     raw_lower = raw.lower().strip()
-    for room in PALACE_ROOMS:
+    for room in CORTEX_ROOMS:
         if room in raw_lower or raw_lower in room:
             return room
     # Partial match on first word
     first_word = raw_lower.split("_")[0].split()[0] if raw_lower else ""
-    for room in PALACE_ROOMS:
+    for room in CORTEX_ROOMS:
         if first_word and first_word in room:
             return room
     return "general"
@@ -448,13 +448,13 @@ def _route_question(question, api_key, model="claude-haiku-4-5-20251001"):
     prompt = (
         f"Which 1 or 2 rooms from the list below does this question relate to?\n"
         f"Reply with ONLY room name(s), comma-separated if two, nothing else.\n\n"
-        f"Rooms:\n{_PALACE_ROOM_LIST}\n\n"
+        f"Rooms:\n{_CORTEX_ROOM_LIST}\n\n"
         f"Question: {question}"
     )
     raw = _llm_call(prompt, api_key, model=model, max_tokens=40)
     raw_lower = raw.lower()
     found = []
-    for room in PALACE_ROOMS:
+    for room in CORTEX_ROOMS:
         if room in raw_lower:
             found.append(room)
         if len(found) >= 2:
@@ -463,19 +463,19 @@ def _route_question(question, api_key, model="claude-haiku-4-5-20251001"):
         # fallback: partial word match
         for part in re.split(r"[,\s]+", raw_lower):
             part = part.strip("_").strip()
-            for room in PALACE_ROOMS:
+            for room in CORTEX_ROOMS:
                 if part and part in room and room not in found:
                     found.append(room)
                 if len(found) >= 2:
                     break
-    return found or PALACE_ROOMS  # if routing fails, search everywhere
+    return found or CORTEX_ROOMS  # if routing fails, search everywhere
 
 
-def palace_assign_rooms(sessions, sample_id, api_key, cache, model="claude-haiku-4-5-20251001"):
+def cortex_assign_rooms(sessions, sample_id, api_key, cache, model="claude-haiku-4-5-20251001"):
     """
-    Assign each session to a palace room. Uses cache to avoid re-calling LLM.
+    Assign each session to a cortex room. Uses cache to avoid re-calling LLM.
 
-    cache: dict loaded from palace_cache file, mutated in place.
+    cache: dict loaded from cortex_cache file, mutated in place.
     Returns dict: session_id → room_name
     """
     assignments = {}
@@ -622,8 +622,8 @@ def run_benchmark(
     llm_key="",
     llm_model="claude-sonnet-4-6",
     hybrid_weight=0.30,
-    palace_cache_file=None,
-    palace_model="claude-haiku-4-5-20251001",
+    cortex_cache_file=None,
+    cortex_model="claude-haiku-4-5-20251001",
     embed_model="default",
 ):
     """Run LoCoMo retrieval benchmark."""
@@ -634,23 +634,23 @@ def run_benchmark(
         data = data[:limit]
 
     api_key = ""
-    if llm_rerank_enabled or mode == "palace":
+    if llm_rerank_enabled or mode == "cortex":
         api_key = _load_api_key(llm_key)
         if not api_key:
             print(f"ERROR: --mode {mode} requires an API key (--llm-key or ANTHROPIC_API_KEY).")
             sys.exit(1)
 
-    # Palace mode: load or create room assignment cache
-    palace_cache = {}
-    _palace_cache_path = None
-    if mode == "palace":
-        _palace_cache_path = palace_cache_file or str(
-            Path(__file__).parent / "palace_cache_locomo.json"
+    # Cortex mode: load or create room assignment cache
+    cortex_cache = {}
+    _cortex_cache_path = None
+    if mode == "cortex":
+        _cortex_cache_path = cortex_cache_file or str(
+            Path(__file__).parent / "cortex_cache_locomo.json"
         )
-        if Path(_palace_cache_path).exists():
-            with open(_palace_cache_path) as f:
-                palace_cache = json.load(f)
-            print(f"  Palace cache: {len(palace_cache)} room assignments loaded")
+        if Path(_cortex_cache_path).exists():
+            with open(_cortex_cache_path) as f:
+                cortex_cache = json.load(f)
+            print(f"  Cortex cache: {len(cortex_cache)} room assignments loaded")
 
     rerank_label = f" + LLM re-rank ({llm_model.split('-')[1]})" if llm_rerank_enabled else ""
 
@@ -682,16 +682,16 @@ def run_benchmark(
             sessions, granularity=granularity
         )
 
-        # Palace mode: assign each session to a room via LLM
+        # Cortex mode: assign each session to a room via LLM
         room_assignments = {}
-        if mode == "palace":
-            room_assignments = palace_assign_rooms(
-                sessions, sample_id, api_key, palace_cache, model=palace_model
+        if mode == "cortex":
+            room_assignments = cortex_assign_rooms(
+                sessions, sample_id, api_key, cortex_cache, model=cortex_model
             )
             # Persist updated cache after each conversation
-            if _palace_cache_path:
-                with open(_palace_cache_path, "w") as f:
-                    json.dump(palace_cache, f, indent=2)
+            if _cortex_cache_path:
+                with open(_cortex_cache_path, "w") as f:
+                    json.dump(cortex_cache, f, indent=2)
             rooms_summary = {}
             for sid, room in room_assignments.items():
                 rooms_summary[room] = rooms_summary.get(room, 0) + 1
@@ -707,10 +707,10 @@ def run_benchmark(
             )
 
         tmpdir = tempfile.mkdtemp(prefix="cortex_locomo_")
-        palace_path = os.path.join(tmpdir, "palace")
+        cortex_path = os.path.join(tmpdir, "cortex")
 
         try:
-            client = chromadb.PersistentClient(path=palace_path)
+            client = chromadb.PersistentClient(path=cortex_path)
             collection = client.create_collection("cortex_drawers")
 
             if mode == "aaak":
@@ -744,15 +744,15 @@ def run_benchmark(
                 category = qa["category"]
                 evidence = qa.get("evidence", [])
 
-                # Extract names + predicate keywords once (used by hybrid, rooms, palace)
-                names = _person_names(question) if mode in ("hybrid", "rooms", "palace") else []
+                # Extract names + predicate keywords once (used by hybrid, rooms, cortex)
+                names = _person_names(question) if mode in ("hybrid", "rooms", "cortex") else []
                 name_words = {n.lower() for n in names}
-                all_kws = _kw(question) if mode in ("hybrid", "rooms", "palace") else []
+                all_kws = _kw(question) if mode in ("hybrid", "rooms", "cortex") else []
                 predicate_kws = [w for w in all_kws if w not in name_words]
-                quoted = _quoted_phrases(question) if mode in ("hybrid", "rooms", "palace") else []
+                quoted = _quoted_phrases(question) if mode in ("hybrid", "rooms", "cortex") else []
 
-                if mode == "palace":
-                    # ── True palace navigation ────────────────────────────────
+                if mode == "cortex":
+                    # ── True cortex navigation ────────────────────────────────
                     # Route using conversation-specific room summaries.
                     # This ensures the same vocabulary used at INDEX TIME (session
                     # summaries) is also used at QUERY TIME — no global taxonomy mismatch.
@@ -824,7 +824,7 @@ def run_benchmark(
                     retrieved_docs = [x[2] for x in scored[:top_k]]
 
                 elif mode == "rooms":
-                    # ── Two-stage palace navigation ──────────────────────────────
+                    # ── Two-stage cortex navigation ──────────────────────────────
                     # Stage 1: route via session summaries to find relevant rooms.
                     #   Score each session's summary by predicate keyword overlap.
                     #   Keep top third of sessions (or at least top_k sessions).
@@ -1003,17 +1003,17 @@ if __name__ == "__main__":
     parser.add_argument("--top-k", type=int, default=50, help="Top-k retrieval (default: 50)")
     parser.add_argument(
         "--mode",
-        choices=["raw", "aaak", "hybrid", "rooms", "palace"],
+        choices=["raw", "aaak", "hybrid", "rooms", "cortex"],
         default="raw",
-        help="Retrieval mode: raw, hybrid (v5), rooms (keyword routing), palace (LLM room assignment)",
+        help="Retrieval mode: raw, hybrid (v5), rooms (keyword routing), cortex (LLM room assignment)",
     )
     parser.add_argument(
-        "--palace-cache", default=None, help="Path to palace room assignment cache JSON"
+        "--cortex-cache", default=None, help="Path to cortex room assignment cache JSON"
     )
     parser.add_argument(
-        "--palace-model",
+        "--cortex-model",
         default="claude-haiku-4-5-20251001",
-        help="Model for palace room assignment (default: haiku)",
+        help="Model for cortex room assignment (default: haiku)",
     )
     parser.add_argument(
         "--granularity",
@@ -1063,7 +1063,7 @@ if __name__ == "__main__":
         args.llm_key,
         args.llm_model,
         args.hybrid_weight,
-        palace_cache_file=args.palace_cache,
-        palace_model=args.palace_model,
+        cortex_cache_file=args.cortex_cache,
+        cortex_model=args.cortex_model,
         embed_model=args.embed_model,
     )

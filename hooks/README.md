@@ -6,7 +6,7 @@ These hook scripts make Cortex save automatically. No manual "save" commands nee
 
 | Hook | When It Fires | What Happens |
 |------|--------------|-------------|
-| **Save Hook** | Every 15 human messages | Blocks the AI, tells it to save key topics/decisions/quotes to the palace |
+| **Save Hook** | Every 15 human messages | Blocks the AI, tells it to save key topics/decisions/quotes to the cortex |
 | **PreCompact Hook** | Right before context compaction | Emergency save — forces the AI to save EVERYTHING before losing context |
 
 The AI does the actual filing — it knows the conversation context, so it classifies memories into the right wings/halls/closets. The hooks just tell it WHEN to save.
@@ -93,7 +93,7 @@ User sends message → AI responds → Claude Code fires Stop hook
                               │
                               └─── ≥ 15 since last save ──→ {"decision": "block", "reason": "save..."}
                                                                     ↓
-                                                            AI saves to palace
+                                                            AI saves to cortex
                                                                     ↓
                                                             AI tries to stop again
                                                                     ↓

@@ -37,9 +37,9 @@ def bench_report_path(request):
 
 
 @pytest.fixture
-def palace_dir(tmp_path):
-    """Isolated palace directory for a single test."""
-    p = tmp_path / "palace"
+def cortex_dir(tmp_path):
+    """Isolated cortex directory for a single test."""
+    p = tmp_path / "cortex"
     p.mkdir()
     return str(p)
 
@@ -55,7 +55,7 @@ def config_dir(tmp_path):
     """Isolated config directory for monkeypatching CortexConfig."""
     d = tmp_path / "config"
     d.mkdir()
-    config = {"palace_path": str(tmp_path / "palace"), "collection_name": "cortex_drawers"}
+    config = {"cortex_path": str(tmp_path / "cortex"), "collection_name": "cortex_drawers"}
     with open(d / "config.json", "w") as f:
         json.dump(config, f)
     return str(d)

@@ -6,23 +6,23 @@ from cortex.config import CortexConfig
 
 def test_default_config():
     cfg = CortexConfig(config_dir=tempfile.mkdtemp())
-    assert "palace" in cfg.palace_path
+    assert "cortex" in cfg.cortex_path
     assert cfg.collection_name == "cortex_drawers"
 
 
 def test_config_from_file():
     tmpdir = tempfile.mkdtemp()
     with open(os.path.join(tmpdir, "config.json"), "w") as f:
-        json.dump({"palace_path": "/custom/palace"}, f)
+        json.dump({"cortex_path": "/custom/cortex"}, f)
     cfg = CortexConfig(config_dir=tmpdir)
-    assert cfg.palace_path == "/custom/palace"
+    assert cfg.cortex_path == "/custom/cortex"
 
 
 def test_env_override():
-    os.environ["CORTEX_PALACE_PATH"] = "/env/palace"
+    os.environ["CORTEX_PATH"] = "/env/cortex"
     cfg = CortexConfig(config_dir=tempfile.mkdtemp())
-    assert cfg.palace_path == "/env/palace"
-    del os.environ["CORTEX_PALACE_PATH"]
+    assert cfg.cortex_path == "/env/cortex"
+    del os.environ["CORTEX_PATH"]
 
 
 def test_init():

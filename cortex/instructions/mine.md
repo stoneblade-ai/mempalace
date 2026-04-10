@@ -24,7 +24,7 @@ Mines code files, documentation, and notes from a project directory.
 
     cortex mine <dir> --mode convos
 
-Mines conversation exports from Claude, ChatGPT, or Slack into the palace.
+Mines conversation exports from Claude, ChatGPT, or Slack into the Cortex.
 
 ### General extraction (auto-classify)
 
@@ -60,5 +60,5 @@ completion, summarize the results including:
 
 After mining completes, suggest the user try:
 - /cortex:search -- search the newly mined content
-- /cortex:status -- check the current state of their palace
+- /cortex:status -- check the current state of their Cortex
 - Mine more data from additional sources

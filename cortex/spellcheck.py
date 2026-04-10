@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-spellcheck.py — Spell-correct user messages before palace filing.
+spellcheck.py — Spell-correct user messages before cortex filing.
 
 Preserves:
   - Technical terms (words with digits, hyphens, underscores)

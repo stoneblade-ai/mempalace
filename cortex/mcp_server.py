@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Cortex MCP Server — read/write palace access for Claude Code
+Cortex MCP Server — read/write cortex access for Claude Code
 ================================================================
-Install: claude mcp add cortex -- python -m cortex.mcp_server [--palace /path/to/palace]
+Install: claude mcp add cortex -- python -m cortex.mcp_server [--cortex /path/to/cortex]
 
 Tools (read):
   cortex_status          — total drawers, wing/room breakdown
@@ -29,7 +29,7 @@ from pathlib import Path
 from .config import CortexConfig, sanitize_name, sanitize_content
 from .version import __version__
 from .searcher import search_memories
-from .palace_graph import traverse, find_tunnels, graph_stats
+from .cortex_graph import traverse, find_tunnels, graph_stats
 import chromadb
 
 from .knowledge_graph import KnowledgeGraph
@@ -41,9 +41,9 @@ logger = logging.getLogger("cortex_mcp")
 def _parse_args():
     parser = argparse.ArgumentParser(description="Cortex MCP Server")
     parser.add_argument(
-        "--palace",
+        "--cortex",
         metavar="PATH",
-        help="Path to the palace directory (overrides config file and env var)",
+        help="Path to the cortex directory (overrides config file and env var)",
     )
     args, unknown = parser.parse_known_args()
     if unknown:
@@ -53,12 +53,12 @@ def _parse_args():
 
 _args = _parse_args()
 
-if _args.palace:
-    os.environ["CORTEX_PALACE_PATH"] = os.path.abspath(_args.palace)
+if _args.cortex:
+    os.environ["CORTEX_PATH"] = os.path.abspath(_args.cortex)
 
 _config = CortexConfig()
-if _args.palace:
-    _kg = KnowledgeGraph(db_path=os.path.join(_config.palace_path, "knowledge_graph.sqlite3"))
+if _args.cortex:
+    _kg = KnowledgeGraph(db_path=os.path.join(_config.cortex_path, "knowledge_graph.sqlite3"))
 else:
     _kg = KnowledgeGraph()
 
@@ -108,7 +108,7 @@ def _get_client():
     """Return a singleton ChromaDB PersistentClient."""
     global _client_cache
     if _client_cache is None:
-        _client_cache = chromadb.PersistentClient(path=_config.palace_path)
+        _client_cache = chromadb.PersistentClient(path=_config.cortex_path)
     return _client_cache
 
 
@@ -126,9 +126,9 @@ def _get_collection(create=False):
         return None
 
 
-def _no_palace():
+def _no_cortex():
     return {
-        "error": "No palace found",
+        "error": "No cortex found",
         "hint": "Run: cortex init <dir> && cortex mine <dir>",
     }
 
@@ -139,7 +139,7 @@ def _no_palace():
 def tool_status():
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     count = col.count()
     wings = {}
     rooms = {}
@@ -156,8 +156,8 @@ def tool_status():
         "total_drawers": count,
         "wings": wings,
         "rooms": rooms,
-        "palace_path": _config.palace_path,
-        "protocol": PALACE_PROTOCOL,
+        "cortex_path": _config.cortex_path,
+        "protocol": CORTEX_PROTOCOL,
         "aaak_dialect": AAAK_SPEC,
     }
 
@@ -166,10 +166,10 @@ def tool_status():
 # Included in status response so the AI learns it on first wake-up call.
 # Also available via cortex_get_aaak_spec tool.
 
-PALACE_PROTOCOL = """IMPORTANT — Cortex Memory Protocol:
-1. ON WAKE-UP: Call cortex_status to load palace overview + AAAK spec.
+CORTEX_PROTOCOL = """IMPORTANT — Cortex Memory Protocol:
+1. ON WAKE-UP: Call cortex_status to load cortex overview + AAAK spec.
 2. BEFORE RESPONDING about any person, project, or past event: call cortex_kg_query or cortex_search FIRST. Never guess — verify.
-3. IF UNSURE about a fact (name, gender, age, relationship): say "let me check" and query the palace. Wrong is worse than slow.
+3. IF UNSURE about a fact (name, gender, age, relationship): say "let me check" and query the cortex. Wrong is worse than slow.
 4. AFTER EACH SESSION: call cortex_diary_write to record what happened, what you learned, what matters.
 5. WHEN FACTS CHANGE: call cortex_kg_invalidate on the old fact, cortex_kg_add for the new one.
 
@@ -198,7 +198,7 @@ When WRITING AAAK: use entity codes, mark emotions, keep structure tight."""
 def tool_list_wings():
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     wings = {}
     try:
         all_meta = col.get(include=["metadatas"], limit=10000)["metadatas"]
@@ -213,7 +213,7 @@ def tool_list_wings():
 def tool_list_rooms(wing: str = None):
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     rooms = {}
     try:
         kwargs = {"include": ["metadatas"], "limit": 10000}
@@ -231,7 +231,7 @@ def tool_list_rooms(wing: str = None):
 def tool_get_taxonomy():
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     taxonomy = {}
     try:
         all_meta = col.get(include=["metadatas"], limit=10000)["metadatas"]
@@ -249,7 +249,7 @@ def tool_get_taxonomy():
 def tool_search(query: str, limit: int = 5, wing: str = None, room: str = None):
     return search_memories(
         query,
-        palace_path=_config.palace_path,
+        cortex_path=_config.cortex_path,
         wing=wing,
         room=room,
         n_results=limit,
@@ -259,7 +259,7 @@ def tool_search(query: str, limit: int = 5, wing: str = None, room: str = None):
 def tool_check_duplicate(content: str, threshold: float = 0.9):
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     try:
         results = col.query(
             query_texts=[content],
@@ -297,10 +297,10 @@ def tool_get_aaak_spec():
 
 
 def tool_traverse_graph(start_room: str, max_hops: int = 2):
-    """Walk the palace graph from a room. Find connected ideas across wings."""
+    """Walk the cortex graph from a room. Find connected ideas across wings."""
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     return traverse(start_room, col=col, max_hops=max_hops)
 
 
@@ -308,15 +308,15 @@ def tool_find_tunnels(wing_a: str = None, wing_b: str = None):
     """Find rooms that bridge two wings — the hallways connecting domains."""
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     return find_tunnels(wing_a, wing_b, col=col)
 
 
 def tool_graph_stats():
-    """Palace graph overview: nodes, tunnels, edges, connectivity."""
+    """Cortex graph overview: nodes, tunnels, edges, connectivity."""
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     return graph_stats(col=col)
 
 
@@ -336,7 +336,7 @@ def tool_add_drawer(
 
     col = _get_collection(create=True)
     if not col:
-        return _no_palace()
+        return _no_cortex()
 
     drawer_id = f"drawer_{wing}_{room}_{hashlib.sha256((wing + room + content[:100]).encode()).hexdigest()[:24]}"
 
@@ -385,7 +385,7 @@ def tool_delete_drawer(drawer_id: str):
     """Delete a single drawer by ID."""
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
     existing = col.get(ids=[drawer_id])
     if not existing["ids"]:
         return {"success": False, "error": f"Drawer not found: {drawer_id}"}
@@ -492,7 +492,7 @@ def tool_diary_write(agent_name: str, entry: str, topic: str = "general"):
     room = "diary"
     col = _get_collection(create=True)
     if not col:
-        return _no_palace()
+        return _no_cortex()
 
     now = datetime.now()
     entry_id = f"diary_{wing}_{now.strftime('%Y%m%d_%H%M%S')}_{hashlib.sha256(entry[:50].encode()).hexdigest()[:12]}"
@@ -548,7 +548,7 @@ def tool_diary_read(agent_name: str, last_n: int = 10):
     wing = f"wing_{agent_name.lower().replace(' ', '_')}"
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
 
     try:
         results = col.get(
@@ -592,7 +592,7 @@ def tool_publish(drawer_id: str, target_wing: str = None, target_room: str = Non
 
     col = _get_collection()
     if not col:
-        return _no_palace()
+        return _no_cortex()
 
     # Read local drawer
     try:
@@ -659,7 +659,7 @@ def tool_publish(drawer_id: str, target_wing: str = None, target_room: str = Non
 
 TOOLS = {
     "cortex_status": {
-        "description": "Palace overview — total drawers, wing and room counts",
+        "description": "Cortex overview — total drawers, wing and room counts",
         "input_schema": {"type": "object", "properties": {}},
         "handler": tool_status,
     },
@@ -770,7 +770,7 @@ TOOLS = {
         "handler": tool_kg_stats,
     },
     "cortex_traverse": {
-        "description": "Walk the palace graph from a room. Shows connected ideas across wings — the tunnels. Like following a thread through the palace: start at 'chromadb-setup' in wing_code, discover it connects to wing_myproject (planning) and wing_user (feelings about it).",
+        "description": "Walk the cortex graph from a room. Shows connected ideas across wings — the tunnels. Like following a thread through the cortex: start at 'chromadb-setup' in wing_code, discover it connects to wing_myproject (planning) and wing_user (feelings about it).",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -799,7 +799,7 @@ TOOLS = {
         "handler": tool_find_tunnels,
     },
     "cortex_graph_stats": {
-        "description": "Palace graph overview: total rooms, tunnel connections, edges between wings.",
+        "description": "Cortex graph overview: total rooms, tunnel connections, edges between wings.",
         "input_schema": {"type": "object", "properties": {}},
         "handler": tool_graph_stats,
     },
@@ -818,7 +818,7 @@ TOOLS = {
         "handler": tool_search,
     },
     "cortex_check_duplicate": {
-        "description": "Check if content already exists in the palace before filing",
+        "description": "Check if content already exists in the cortex before filing",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -833,7 +833,7 @@ TOOLS = {
         "handler": tool_check_duplicate,
     },
     "cortex_add_drawer": {
-        "description": "File verbatim content into the palace. Checks for duplicates first.",
+        "description": "File verbatim content into the cortex. Checks for duplicates first.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -878,7 +878,7 @@ TOOLS = {
         "handler": tool_publish,
     },
     "cortex_diary_write": {
-        "description": "Write to your personal agent diary in AAAK format. Your observations, thoughts, what you worked on, what matters. Each agent has their own diary with full history. Write in AAAK for compression — e.g. 'SESSION:2026-04-04|built.palace.graph+diary.tools|ALC.req:agent.diaries.in.aaak|★★★'. Use entity codes from the AAAK spec.",
+        "description": "Write to your personal agent diary in AAAK format. Your observations, thoughts, what you worked on, what matters. Each agent has their own diary with full history. Write in AAAK for compression — e.g. 'SESSION:2026-04-04|built.cortex.graph+diary.tools|ALC.req:agent.diaries.in.aaak|★★★'. Use entity codes from the AAAK spec.",
         "input_schema": {
             "type": "object",
             "properties": {
