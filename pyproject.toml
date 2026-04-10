@@ -1,5 +1,5 @@
 [project]
-name = "mempalace"
+name = "cortex"
 version = "3.1.0"
 description = "Give your AI a memory — mine projects and conversations into a searchable palace. No API key required."
 readme = "README.md"
@@ -30,12 +30,12 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/milla-jovovich/mempalace"
-Repository = "https://github.com/milla-jovovich/mempalace"
-"Bug Tracker" = "https://github.com/milla-jovovich/mempalace/issues"
+Homepage = "https://github.com/milla-jovovich/cortex"
+Repository = "https://github.com/milla-jovovich/cortex"
+"Bug Tracker" = "https://github.com/milla-jovovich/cortex/issues"
 
 [project.scripts]
-mempalace = "mempalace:main"
+cortex = "cortex:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.4.0", "psutil>=5.9"]
@@ -50,7 +50,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["mempalace"]
+packages = ["cortex"]
 
 [tool.ruff]
 line-length = 100
@@ -74,7 +74,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["mempalace"]
+source = ["cortex"]
 
 [tool.coverage.report]
 fail_under = 85

@@ -1,13 +1,13 @@
 ---
 name: status
-description: Show MemPalace status — room counts, storage usage, and palace health.
+description: Show Cortex status — room counts, storage usage, and palace health.
 allowed-tools: Bash, Read
 ---
 
-# MemPalace Status
+# Cortex Status
 
 Run the following command and follow the returned instructions step by step:
 
 ```bash
-mempalace instructions status
+cortex instructions status
 ```

@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add team-shared memory to MemPalace — a FastAPI team server, an HTTP client with routing layer in the MCP server, and CLI extensions for publish/team management.
+**Goal:** Add team-shared memory to Cortex — a FastAPI team server, an HTTP client with routing layer in the MCP server, and CLI extensions for publish/team management.
 
 **Architecture:** Three independent subsystems built in order: (1) Team Server — standalone FastAPI app with auth, CRUD, search, KG, and WAL; (2) TeamClient + Router — HTTP client in the MCP server that queries both local and team, merges via RRF; (3) CLI Extensions — `publish`, `team` subcommands, `--layer` flag on search.
 
-**Tech Stack:** Python 3.9+, FastAPI, uvicorn, httpx (async HTTP client), ChromaDB, SQLite, existing mempalace infrastructure.
+**Tech Stack:** Python 3.9+, FastAPI, uvicorn, httpx (async HTTP client), ChromaDB, SQLite, existing cortex infrastructure.
 
 **Spec:** `docs/superpowers/specs/2026-04-10-team-shared-memory-design.md`
 
@@ -18,13 +18,13 @@
 
 | File | Responsibility |
 |------|---------------|
-| `mempalace/team_server.py` | FastAPI app: endpoints, auth middleware, permission checks, WAL logging |
-| `mempalace/team_auth.py` | API key hashing, user lookup, permission resolution, key generation/rotation |
-| `mempalace/team_config.py` | Team server config loading (`team_config.json`), user CRUD |
-| `mempalace/team_client.py` | Async HTTP client for talking to team server from local MCP |
-| `mempalace/team_router.py` | Routing layer: decides local/team/both, RRF merge, dedupe |
-| `mempalace/team_cli.py` | CLI subcommands: `team init/status/whoami/serve/add-user/remove-user/rotate-key` |
-| `mempalace/publish.py` | Publish logic: local→team, re-publish with version check, batch publish |
+| `cortex/team_server.py` | FastAPI app: endpoints, auth middleware, permission checks, WAL logging |
+| `cortex/team_auth.py` | API key hashing, user lookup, permission resolution, key generation/rotation |
+| `cortex/team_config.py` | Team server config loading (`team_config.json`), user CRUD |
+| `cortex/team_client.py` | Async HTTP client for talking to team server from local MCP |
+| `cortex/team_router.py` | Routing layer: decides local/team/both, RRF merge, dedupe |
+| `cortex/team_cli.py` | CLI subcommands: `team init/status/whoami/serve/add-user/remove-user/rotate-key` |
+| `cortex/publish.py` | Publish logic: local→team, re-publish with version check, batch publish |
 | `tests/test_team_auth.py` | Auth unit tests |
 | `tests/test_team_config.py` | Team config unit tests |
 | `tests/test_team_server.py` | Server endpoint integration tests |
@@ -37,9 +37,9 @@
 
 | File | Changes |
 |------|---------|
-| `mempalace/config.py` | Add `team` config section parsing, env var `MEMPALACE_TEAM_API_KEY` |
-| `mempalace/mcp_server.py` | Wire in team_router for search/status/wings/rooms/delete, add `mempalace_publish` tool |
-| `mempalace/cli.py` | Add `publish` and `team` commands, `--layer` on search, `--publish` on mine |
+| `cortex/config.py` | Add `team` config section parsing, env var `CORTEX_TEAM_API_KEY` |
+| `cortex/mcp_server.py` | Wire in team_router for search/status/wings/rooms/delete, add `cortex_publish` tool |
+| `cortex/cli.py` | Add `publish` and `team` commands, `--layer` on search, `--publish` on mine |
 | `pyproject.toml` | Add `fastapi`, `uvicorn`, `httpx` to optional `[team]` dependency group |
 
 ---
@@ -48,7 +48,7 @@
 
 **Files:**
 - Modify: `pyproject.toml`
-- Modify: `mempalace/config.py`
+- Modify: `cortex/config.py`
 - Create: `tests/test_team_config_ext.py`
 
 - [ ] **Step 1: Add team dependency group to pyproject.toml**
@@ -62,18 +62,18 @@ team = ["fastapi>=0.115.0", "uvicorn>=0.30.0", "httpx>=0.27.0"]
 
 ```python
 # tests/test_team_config_ext.py
-"""Tests for team config section in MempalaceConfig."""
+"""Tests for team config section in CortexConfig."""
 import json
 import pytest
-from mempalace.config import MempalaceConfig
+from cortex.config import CortexConfig
 
 
 def test_team_config_disabled_by_default(tmp_path):
     """No team section = team disabled."""
-    config_dir = tmp_path / ".mempalace"
+    config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
     (config_dir / "config.json").write_text(json.dumps({"palace_path": str(tmp_path / "palace")}))
-    cfg = MempalaceConfig(config_dir=str(config_dir))
+    cfg = CortexConfig(config_dir=str(config_dir))
     assert cfg.team_enabled is False
     assert cfg.team_server is None
     assert cfg.team_api_key is None
@@ -82,7 +82,7 @@ def test_team_config_disabled_by_default(tmp_path):
 
 def test_team_config_from_file(tmp_path):
     """Team section in config.json is parsed."""
-    config_dir = tmp_path / ".mempalace"
+    config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
     (config_dir / "config.json").write_text(json.dumps({
         "palace_path": str(tmp_path / "palace"),
@@ -93,7 +93,7 @@ def test_team_config_from_file(tmp_path):
             "timeout_seconds": 5,
         },
     }))
-    cfg = MempalaceConfig(config_dir=str(config_dir))
+    cfg = CortexConfig(config_dir=str(config_dir))
     assert cfg.team_enabled is True
     assert cfg.team_server == "https://team.example.com"
     assert cfg.team_api_key == "ak_abc123"
@@ -101,8 +101,8 @@ def test_team_config_from_file(tmp_path):
 
 
 def test_team_api_key_env_var_overrides_config(tmp_path, monkeypatch):
-    """MEMPALACE_TEAM_API_KEY env var takes precedence over config.json."""
-    config_dir = tmp_path / ".mempalace"
+    """CORTEX_TEAM_API_KEY env var takes precedence over config.json."""
+    config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
     (config_dir / "config.json").write_text(json.dumps({
         "palace_path": str(tmp_path / "palace"),
@@ -112,19 +112,19 @@ def test_team_api_key_env_var_overrides_config(tmp_path, monkeypatch):
             "api_key": "ak_from_config",
         },
     }))
-    monkeypatch.setenv("MEMPALACE_TEAM_API_KEY", "ak_from_env")
-    cfg = MempalaceConfig(config_dir=str(config_dir))
+    monkeypatch.setenv("CORTEX_TEAM_API_KEY", "ak_from_env")
+    cfg = CortexConfig(config_dir=str(config_dir))
     assert cfg.team_api_key == "ak_from_env"
 ```
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_config_ext.py -v`
-Expected: FAIL — `MempalaceConfig` has no `team_enabled` attribute
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_config_ext.py -v`
+Expected: FAIL — `CortexConfig` has no `team_enabled` attribute
 
 - [ ] **Step 4: Implement team config properties in config.py**
 
-Add these properties to `MempalaceConfig` class after `hall_keywords`:
+Add these properties to `CortexConfig` class after `hall_keywords`:
 
 ```python
 @property
@@ -141,8 +141,8 @@ def team_server(self):
 
 @property
 def team_api_key(self):
-    """Team API key. Env var MEMPALACE_TEAM_API_KEY takes precedence."""
-    env_val = os.environ.get("MEMPALACE_TEAM_API_KEY")
+    """Team API key. Env var CORTEX_TEAM_API_KEY takes precedence."""
+    env_val = os.environ.get("CORTEX_TEAM_API_KEY")
     if env_val:
         return env_val
     team = self._file_config.get("team", {})
@@ -157,18 +157,18 @@ def team_timeout(self):
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_config_ext.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_config_ext.py -v`
 Expected: 3 passed
 
 - [ ] **Step 6: Run full test suite to verify no regressions**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/ -v --timeout=60`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/ -v --timeout=60`
 Expected: All existing tests pass
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add pyproject.toml mempalace/config.py tests/test_team_config_ext.py
+git add pyproject.toml cortex/config.py tests/test_team_config_ext.py
 git commit -m "feat(team): add team config section and dependency group"
 ```
 
@@ -177,7 +177,7 @@ git commit -m "feat(team): add team config section and dependency group"
 ## Task 2: Team Auth Module
 
 **Files:**
-- Create: `mempalace/team_auth.py`
+- Create: `cortex/team_auth.py`
 - Create: `tests/test_team_auth.py`
 
 - [ ] **Step 1: Write failing tests for auth module**
@@ -186,7 +186,7 @@ git commit -m "feat(team): add team config section and dependency group"
 # tests/test_team_auth.py
 """Tests for team API key auth: hashing, generation, user lookup."""
 import pytest
-from mempalace.team_auth import hash_api_key, generate_api_key, resolve_user, check_wing_permission
+from cortex.team_auth import hash_api_key, generate_api_key, resolve_user, check_wing_permission
 
 
 def test_hash_api_key_deterministic():
@@ -266,13 +266,13 @@ def test_check_wing_permission_member_write():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_auth.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'mempalace.team_auth'`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_auth.py -v`
+Expected: FAIL — `ModuleNotFoundError: No module named 'cortex.team_auth'`
 
 - [ ] **Step 3: Implement team_auth.py**
 
 ```python
-# mempalace/team_auth.py
+# cortex/team_auth.py
 """Team API key authentication: generation, hashing, permission checks."""
 
 import hashlib
@@ -323,13 +323,13 @@ def check_wing_permission(user: dict, wing: str, operation: str) -> bool:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_auth.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_auth.py -v`
 Expected: All passed
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add mempalace/team_auth.py tests/test_team_auth.py
+git add cortex/team_auth.py tests/test_team_auth.py
 git commit -m "feat(team): add auth module — key generation, hashing, permission checks"
 ```
 
@@ -338,7 +338,7 @@ git commit -m "feat(team): add auth module — key generation, hashing, permissi
 ## Task 3: Team Server Config Module
 
 **Files:**
-- Create: `mempalace/team_config.py`
+- Create: `cortex/team_config.py`
 - Create: `tests/test_team_config.py`
 
 - [ ] **Step 1: Write failing tests for team server config**
@@ -348,8 +348,8 @@ git commit -m "feat(team): add auth module — key generation, hashing, permissi
 """Tests for team server configuration: load, save, user CRUD."""
 import json
 import pytest
-from mempalace.team_config import TeamServerConfig
-from mempalace.team_auth import hash_api_key
+from cortex.team_config import TeamServerConfig
+from cortex.team_auth import hash_api_key
 
 
 def test_load_empty_config(tmp_path):
@@ -441,13 +441,13 @@ def test_get_user_by_id(tmp_path):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_config.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_config.py -v`
 Expected: FAIL — `ModuleNotFoundError`
 
 - [ ] **Step 3: Implement team_config.py**
 
 ```python
-# mempalace/team_config.py
+# cortex/team_config.py
 """Team server configuration: user management, persistence."""
 
 import json
@@ -544,13 +544,13 @@ class TeamServerConfig:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_config.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_config.py -v`
 Expected: All passed
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add mempalace/team_config.py tests/test_team_config.py
+git add cortex/team_config.py tests/test_team_config.py
 git commit -m "feat(team): add server config module — user CRUD, key rotation"
 ```
 
@@ -559,7 +559,7 @@ git commit -m "feat(team): add server config module — user CRUD, key rotation"
 ## Task 4: Team Server — Core Endpoints
 
 **Files:**
-- Create: `mempalace/team_server.py`
+- Create: `cortex/team_server.py`
 - Create: `tests/test_team_server.py`
 
 - [ ] **Step 1: Write failing tests for server health and auth**
@@ -569,14 +569,14 @@ git commit -m "feat(team): add server config module — user CRUD, key rotation"
 """Integration tests for team server endpoints."""
 import json
 import pytest
-from mempalace.team_auth import hash_api_key
+from cortex.team_auth import hash_api_key
 
 # Defer FastAPI import to avoid hard dependency
 pytest.importorskip("fastapi")
 pytest.importorskip("httpx")
 
 from fastapi.testclient import TestClient
-from mempalace.team_server import create_app
+from cortex.team_server import create_app
 
 
 @pytest.fixture
@@ -754,13 +754,13 @@ def test_wings_and_taxonomy(team_env):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_server.py -v`
-Expected: FAIL — `ModuleNotFoundError: No module named 'mempalace.team_server'`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_server.py -v`
+Expected: FAIL — `ModuleNotFoundError: No module named 'cortex.team_server'`
 
 - [ ] **Step 3: Implement team_server.py**
 
 ```python
-# mempalace/team_server.py
+# cortex/team_server.py
 """Team memory server — FastAPI app with auth, CRUD, search, versioning."""
 
 import hashlib
@@ -774,7 +774,7 @@ from .team_auth import resolve_user, check_wing_permission
 from .team_config import TeamServerConfig
 from .version import __version__
 
-logger = logging.getLogger("mempalace_team")
+logger = logging.getLogger("cortex_team")
 
 
 def create_app(config_path: str, data_dir: str):
@@ -784,7 +784,7 @@ def create_app(config_path: str, data_dir: str):
 
     import chromadb
 
-    app = FastAPI(title="MemPalace Team Server", version=__version__)
+    app = FastAPI(title="Cortex Team Server", version=__version__)
 
     data_path = Path(data_dir)
     data_path.mkdir(parents=True, exist_ok=True)
@@ -795,7 +795,7 @@ def create_app(config_path: str, data_dir: str):
     wal_file = wal_path / "write_log.jsonl"
 
     chroma_client = chromadb.PersistentClient(path=str(palace_path))
-    collection = chroma_client.get_or_create_collection("mempalace_team_drawers")
+    collection = chroma_client.get_or_create_collection("cortex_team_drawers")
 
     # In-memory version store: drawer_id -> version int
     # Loaded from metadata on startup, updated on writes
@@ -1197,18 +1197,18 @@ def create_app(config_path: str, data_dir: str):
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && pip install fastapi httpx uvicorn && python -m pytest tests/test_team_server.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && pip install fastapi httpx uvicorn && python -m pytest tests/test_team_server.py -v`
 Expected: All passed
 
 - [ ] **Step 5: Run full test suite**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/ -v --timeout=60`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/ -v --timeout=60`
 Expected: All tests pass (new + existing)
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add mempalace/team_server.py tests/test_team_server.py
+git add cortex/team_server.py tests/test_team_server.py
 git commit -m "feat(team): add team server — auth, CRUD, search, versioning endpoints"
 ```
 
@@ -1217,7 +1217,7 @@ git commit -m "feat(team): add team server — auth, CRUD, search, versioning en
 ## Task 5: Team Server — Knowledge Graph Endpoints
 
 **Files:**
-- Modify: `mempalace/team_server.py`
+- Modify: `cortex/team_server.py`
 - Modify: `tests/test_team_server.py`
 
 - [ ] **Step 1: Write failing tests for KG endpoints**
@@ -1271,7 +1271,7 @@ def test_kg_timeline(team_env):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_server.py::test_kg_add_and_query -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_server.py::test_kg_add_and_query -v`
 Expected: FAIL — 404 (endpoint doesn't exist yet)
 
 - [ ] **Step 3: Add KG endpoints to team_server.py**
@@ -1345,13 +1345,13 @@ Add inside `create_app()`, after the taxonomy endpoint, before `return app`:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_server.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_server.py -v`
 Expected: All passed
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add mempalace/team_server.py tests/test_team_server.py
+git add cortex/team_server.py tests/test_team_server.py
 git commit -m "feat(team): add knowledge graph endpoints to team server"
 ```
 
@@ -1360,7 +1360,7 @@ git commit -m "feat(team): add knowledge graph endpoints to team server"
 ## Task 6: TeamClient — HTTP Client
 
 **Files:**
-- Create: `mempalace/team_client.py`
+- Create: `cortex/team_client.py`
 - Create: `tests/test_team_client.py`
 
 - [ ] **Step 1: Write failing tests for team client**
@@ -1374,7 +1374,7 @@ import pytest
 pytest.importorskip("httpx")
 
 from unittest.mock import AsyncMock, patch
-from mempalace.team_client import TeamClient
+from cortex.team_client import TeamClient
 
 
 @pytest.fixture
@@ -1465,19 +1465,19 @@ async def test_connection_error_returns_unavailable(client):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_client.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_client.py -v`
 Expected: FAIL — `ModuleNotFoundError`
 
 - [ ] **Step 3: Implement team_client.py**
 
 ```python
-# mempalace/team_client.py
+# cortex/team_client.py
 """Async HTTP client for the team memory server."""
 
 import logging
 from urllib.parse import urlparse
 
-logger = logging.getLogger("mempalace_team_client")
+logger = logging.getLogger("cortex_team_client")
 
 
 class TeamClient:
@@ -1599,13 +1599,13 @@ def _error_result(status: str) -> dict:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && pip install pytest-asyncio && python -m pytest tests/test_team_client.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && pip install pytest-asyncio && python -m pytest tests/test_team_client.py -v`
 Expected: All passed
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add mempalace/team_client.py tests/test_team_client.py
+git add cortex/team_client.py tests/test_team_client.py
 git commit -m "feat(team): add async HTTP client with timeout/error handling"
 ```
 
@@ -1614,7 +1614,7 @@ git commit -m "feat(team): add async HTTP client with timeout/error handling"
 ## Task 7: Team Router — RRF Merge and Routing
 
 **Files:**
-- Create: `mempalace/team_router.py`
+- Create: `cortex/team_router.py`
 - Create: `tests/test_team_router.py`
 
 - [ ] **Step 1: Write failing tests for RRF merge and routing**
@@ -1623,7 +1623,7 @@ git commit -m "feat(team): add async HTTP client with timeout/error handling"
 # tests/test_team_router.py
 """Tests for team router: RRF merge, dedupe, routing decisions."""
 import pytest
-from mempalace.team_router import rrf_merge, dedupe, determine_layer
+from cortex.team_router import rrf_merge, dedupe, determine_layer
 
 
 def test_rrf_merge_basic():
@@ -1697,13 +1697,13 @@ def test_determine_layer():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_router.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_router.py -v`
 Expected: FAIL — `ModuleNotFoundError`
 
 - [ ] **Step 3: Implement team_router.py**
 
 ```python
-# mempalace/team_router.py
+# cortex/team_router.py
 """Routing layer: decides local/team/both, RRF merge, dedupe."""
 
 
@@ -1796,13 +1796,13 @@ def determine_layer(hit: dict) -> str:
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_router.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_router.py -v`
 Expected: All passed
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add mempalace/team_router.py tests/test_team_router.py
+git add cortex/team_router.py tests/test_team_router.py
 git commit -m "feat(team): add router with RRF merge and origin-based dedupe"
 ```
 
@@ -1811,7 +1811,7 @@ git commit -m "feat(team): add router with RRF merge and origin-based dedupe"
 ## Task 8: Wire Router into MCP Server
 
 **Files:**
-- Modify: `mempalace/mcp_server.py`
+- Modify: `cortex/mcp_server.py`
 - Create: `tests/test_mcp_team_routing.py`
 
 - [ ] **Step 1: Write failing tests for MCP team routing**
@@ -1822,14 +1822,14 @@ git commit -m "feat(team): add router with RRF merge and origin-based dedupe"
 import json
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from mempalace.mcp_server import tool_search, tool_status, tool_list_wings
+from cortex.mcp_server import tool_search, tool_status, tool_list_wings
 
 
 def test_search_without_team_config(tmp_path, monkeypatch):
     """Search without team config returns local-only results."""
     # This should work exactly as before — no team routing
     # The test verifies the tool still works when team is not configured
-    import mempalace.mcp_server as mcp
+    import cortex.mcp_server as mcp
     mock_config = MagicMock()
     mock_config.team_enabled = False
     mock_config.palace_path = str(tmp_path / "palace")
@@ -1841,23 +1841,23 @@ def test_search_without_team_config(tmp_path, monkeypatch):
 
 
 def test_publish_tool_exists():
-    """mempalace_publish tool is registered."""
-    from mempalace.mcp_server import TOOLS
-    assert "mempalace_publish" in TOOLS
+    """cortex_publish tool is registered."""
+    from cortex.mcp_server import TOOLS
+    assert "cortex_publish" in TOOLS
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_mcp_team_routing.py -v`
-Expected: FAIL — `mempalace_publish` not in TOOLS
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_mcp_team_routing.py -v`
+Expected: FAIL — `cortex_publish` not in TOOLS
 
 - [ ] **Step 3: Add publish tool and team routing to mcp_server.py**
 
 Add the publish tool registration to the `TOOLS` dict in `mcp_server.py`:
 
 ```python
-# Add after mempalace_delete_drawer in TOOLS dict
-"mempalace_publish": {
+# Add after cortex_delete_drawer in TOOLS dict
+"cortex_publish": {
     "description": "Publish a local drawer to the team layer. First publish creates a new team drawer; re-publish updates the existing one. Requires team config.",
     "input_schema": {
         "type": "object",
@@ -1954,18 +1954,18 @@ def tool_publish(drawer_id: str, target_wing: str = None, target_room: str = Non
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_mcp_team_routing.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_mcp_team_routing.py -v`
 Expected: All passed
 
 - [ ] **Step 5: Run full test suite**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/ -v --timeout=60`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/ -v --timeout=60`
 Expected: All tests pass
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add mempalace/mcp_server.py tests/test_mcp_team_routing.py
+git add cortex/mcp_server.py tests/test_mcp_team_routing.py
 git commit -m "feat(team): wire publish tool and team routing into MCP server"
 ```
 
@@ -1974,8 +1974,8 @@ git commit -m "feat(team): wire publish tool and team routing into MCP server"
 ## Task 9: CLI — Team Subcommands
 
 **Files:**
-- Create: `mempalace/team_cli.py`
-- Modify: `mempalace/cli.py`
+- Create: `cortex/team_cli.py`
+- Modify: `cortex/cli.py`
 - Create: `tests/test_team_cli.py`
 
 - [ ] **Step 1: Write failing tests for team CLI**
@@ -1986,12 +1986,12 @@ git commit -m "feat(team): wire publish tool and team routing into MCP server"
 import json
 import pytest
 from unittest.mock import patch, MagicMock
-from mempalace.team_cli import cmd_team_init, cmd_team_status, cmd_team_whoami, cmd_team_add_user, cmd_team_remove_user
+from cortex.team_cli import cmd_team_init, cmd_team_status, cmd_team_whoami, cmd_team_add_user, cmd_team_remove_user
 
 
 def test_team_init_creates_config(tmp_path, monkeypatch):
     """team init writes team config to config.json."""
-    config_dir = tmp_path / ".mempalace"
+    config_dir = tmp_path / ".cortex"
     config_dir.mkdir()
     (config_dir / "config.json").write_text(json.dumps({"palace_path": str(tmp_path / "palace")}))
 
@@ -2000,7 +2000,7 @@ def test_team_init_creates_config(tmp_path, monkeypatch):
     mock_args.api_key = "ak_test123"
 
     monkeypatch.setenv("HOME", str(tmp_path))
-    with patch("mempalace.team_cli.MempalaceConfig") as MockConfig:
+    with patch("cortex.team_cli.CortexConfig") as MockConfig:
         mock_cfg = MagicMock()
         mock_cfg._config_dir = config_dir
         mock_cfg._config_file = config_dir / "config.json"
@@ -2022,7 +2022,7 @@ def test_team_add_user(tmp_path, capsys):
     mock_args.read_wings = "frontend,shared"
     mock_args.write_wings = "frontend"
 
-    with patch("mempalace.team_cli._get_team_config_path", return_value=str(config_path)):
+    with patch("cortex.team_cli._get_team_config_path", return_value=str(config_path)):
         cmd_team_add_user(mock_args)
 
     captured = capsys.readouterr()
@@ -2036,14 +2036,14 @@ def test_team_remove_user(tmp_path, capsys):
     """team remove-user removes the user."""
     config_path = tmp_path / "team_config.json"
     # Pre-create with a user
-    from mempalace.team_config import TeamServerConfig
+    from cortex.team_config import TeamServerConfig
     cfg = TeamServerConfig(config_path=str(config_path))
     cfg.add_user("kai", "member", ["frontend"], ["frontend"])
 
     mock_args = MagicMock()
     mock_args.id = "kai"
 
-    with patch("mempalace.team_cli._get_team_config_path", return_value=str(config_path)):
+    with patch("cortex.team_cli._get_team_config_path", return_value=str(config_path)):
         cmd_team_remove_user(mock_args)
 
     saved = json.loads(config_path.read_text())
@@ -2052,30 +2052,30 @@ def test_team_remove_user(tmp_path, capsys):
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_cli.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_cli.py -v`
 Expected: FAIL — `ModuleNotFoundError`
 
 - [ ] **Step 3: Implement team_cli.py**
 
 ```python
-# mempalace/team_cli.py
+# cortex/team_cli.py
 """CLI subcommands for team management."""
 
 import json
 import os
 
-from .config import MempalaceConfig
+from .config import CortexConfig
 from .team_config import TeamServerConfig
 
 
 def _get_team_config_path():
     """Default path for team server config."""
-    return os.path.expanduser("/var/mempalace-team/team_config.json")
+    return os.path.expanduser("/var/cortex-team/team_config.json")
 
 
 def cmd_team_init(args):
     """Interactive setup: write team config to config.json."""
-    cfg = MempalaceConfig()
+    cfg = CortexConfig()
     config = cfg._file_config.copy()
     config["team"] = {
         "enabled": True,
@@ -2094,7 +2094,7 @@ def cmd_team_init(args):
 
 def cmd_team_status(args):
     """Show team connection status."""
-    cfg = MempalaceConfig()
+    cfg = CortexConfig()
     if not cfg.team_enabled:
         print("  Team layer: not configured")
         return
@@ -2120,7 +2120,7 @@ def cmd_team_status(args):
 
 def cmd_team_whoami(args):
     """Show current user and accessible wings."""
-    cfg = MempalaceConfig()
+    cfg = CortexConfig()
     if not cfg.team_enabled:
         print("  Team layer: not configured")
         return
@@ -2145,12 +2145,12 @@ def cmd_team_serve(args):
     from .team_server import create_app
 
     config_path = getattr(args, "config", _get_team_config_path())
-    data_dir = getattr(args, "data_dir", "/var/mempalace-team/data")
+    data_dir = getattr(args, "data_dir", "/var/cortex-team/data")
     host = getattr(args, "host", "127.0.0.1")
     port = getattr(args, "port", 8900)
 
     app = create_app(config_path=config_path, data_dir=data_dir)
-    print(f"  MemPalace Team Server starting on {host}:{port}")
+    print(f"  Cortex Team Server starting on {host}:{port}")
     uvicorn.run(app, host=host, port=port)
 
 
@@ -2250,7 +2250,7 @@ elif args.command == "team":
     if handler:
         handler(args)
     else:
-        print("  Usage: mempalace team {init|status|whoami|serve|add-user|remove-user|rotate-key}")
+        print("  Usage: cortex team {init|status|whoami|serve|add-user|remove-user|rotate-key}")
 ```
 
 And add the subparser in the argument parser setup:
@@ -2262,18 +2262,18 @@ add_team_subparser(subparsers)
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_team_cli.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_team_cli.py -v`
 Expected: All passed
 
 - [ ] **Step 6: Run full test suite**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/ -v --timeout=60`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/ -v --timeout=60`
 Expected: All tests pass
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add mempalace/team_cli.py mempalace/cli.py tests/test_team_cli.py
+git add cortex/team_cli.py cortex/cli.py tests/test_team_cli.py
 git commit -m "feat(team): add team CLI subcommands and wire into main CLI"
 ```
 
@@ -2282,7 +2282,7 @@ git commit -m "feat(team): add team CLI subcommands and wire into main CLI"
 ## Task 10: CLI — Publish Command and --layer Flag on Search
 
 **Files:**
-- Modify: `mempalace/cli.py`
+- Modify: `cortex/cli.py`
 - Create: `tests/test_cli_layer.py`
 
 - [ ] **Step 1: Write failing tests for --layer flag and publish command**
@@ -2296,10 +2296,10 @@ from unittest.mock import patch, MagicMock
 
 def test_search_layer_flag_parsed():
     """--layer flag is accepted by search command."""
-    from mempalace.cli import main
+    from cortex.cli import main
     import sys
-    with patch.object(sys, "argv", ["mempalace", "search", "test query", "--layer", "local"]):
-        with patch("mempalace.cli.cmd_search") as mock_search:
+    with patch.object(sys, "argv", ["cortex", "search", "test query", "--layer", "local"]):
+        with patch("cortex.cli.cmd_search") as mock_search:
             try:
                 main()
             except SystemExit:
@@ -2311,10 +2311,10 @@ def test_search_layer_flag_parsed():
 
 def test_publish_command_parsed():
     """publish command is accepted."""
-    from mempalace.cli import main
+    from cortex.cli import main
     import sys
-    with patch.object(sys, "argv", ["mempalace", "publish", "drawer_123"]):
-        with patch("mempalace.cli.cmd_publish") as mock_publish:
+    with patch.object(sys, "argv", ["cortex", "publish", "drawer_123"]):
+        with patch("cortex.cli.cmd_publish") as mock_publish:
             try:
                 main()
             except SystemExit:
@@ -2326,7 +2326,7 @@ def test_publish_command_parsed():
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_cli_layer.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_cli_layer.py -v`
 Expected: FAIL — no `--layer` argument or `publish` command
 
 - [ ] **Step 3: Add --layer to search and publish command to cli.py**
@@ -2359,23 +2359,23 @@ def cmd_publish(args):
         else:
             print(f"  Error: {result.get('error', 'unknown')}")
     else:
-        print("  Usage: mempalace publish <drawer_id> [--wing W] [--room R]")
+        print("  Usage: cortex publish <drawer_id> [--wing W] [--room R]")
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_cli_layer.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_cli_layer.py -v`
 Expected: All passed
 
 - [ ] **Step 5: Run full test suite**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/ -v --timeout=60`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/ -v --timeout=60`
 Expected: All tests pass
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add mempalace/cli.py tests/test_cli_layer.py
+git add cortex/cli.py tests/test_cli_layer.py
 git commit -m "feat(team): add --layer flag on search and publish CLI command"
 ```
 
@@ -2399,8 +2399,8 @@ pytest.importorskip("httpx")
 
 import chromadb
 from fastapi.testclient import TestClient
-from mempalace.team_auth import hash_api_key
-from mempalace.team_server import create_app
+from cortex.team_auth import hash_api_key
+from cortex.team_server import create_app
 
 
 @pytest.fixture
@@ -2410,7 +2410,7 @@ def full_env(tmp_path):
     local_palace = tmp_path / "local_palace"
     local_palace.mkdir()
     local_client = chromadb.PersistentClient(path=str(local_palace))
-    local_col = local_client.get_or_create_collection("mempalace_drawers")
+    local_col = local_client.get_or_create_collection("cortex_drawers")
 
     # Add a local drawer
     local_col.upsert(
@@ -2510,12 +2510,12 @@ def test_re_publish_updates_existing(full_env):
 
 - [ ] **Step 2: Run integration tests**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/test_integration_publish.py -v`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/test_integration_publish.py -v`
 Expected: All passed
 
 - [ ] **Step 3: Run full test suite**
 
-Run: `cd /Users/andy/stoneblade/mempalace && python -m pytest tests/ -v --timeout=60`
+Run: `cd /Users/andy/stoneblade/cortex && python -m pytest tests/ -v --timeout=60`
 Expected: All tests pass
 
 - [ ] **Step 4: Commit**

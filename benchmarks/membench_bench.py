@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MemPal × MemBench Benchmark
+Cortex × MemBench Benchmark
 ============================
 
 MemBench (ACL 2025): https://aclanthology.org/2025.findings-acl.989/
@@ -313,7 +313,7 @@ def run_membench(
         return
 
     print(f"\n{'=' * 58}")
-    print("  MemPal × MemBench")
+    print("  Cortex × MemBench")
     print(f"{'=' * 58}")
     print(f"  Data dir:    {data_dir}")
     print(f"  Categories:  {', '.join(categories or ['all'])}")
@@ -409,7 +409,7 @@ def run_membench(
     # Final results
     overall = total_hit / len(items) * 100 if items else 0
     print(f"\n{'=' * 58}")
-    print(f"  RESULTS — MemPal on MemBench ({mode} mode, top-{top_k})")
+    print(f"  RESULTS — Cortex on MemBench ({mode} mode, top-{top_k})")
     print(f"{'=' * 58}")
     print(f"\n  Overall R@{top_k}: {overall:.1f}%  ({total_hit}/{len(items)})\n")
     print("  By category:")
@@ -429,7 +429,7 @@ def run_membench(
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MemPal × MemBench Benchmark")
+    parser = argparse.ArgumentParser(description="Cortex × MemBench Benchmark")
     parser.add_argument("data_dir", help="Path to MemBench FirstAgent directory")
     parser.add_argument(
         "--category",

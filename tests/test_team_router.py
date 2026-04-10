@@ -1,6 +1,6 @@
 """Tests for team router: RRF merge, dedupe, routing decisions."""
 import pytest
-from mempalace.team_router import rrf_merge, dedupe, determine_layer
+from cortex.team_router import rrf_merge, dedupe, determine_layer
 
 
 def test_rrf_merge_basic():

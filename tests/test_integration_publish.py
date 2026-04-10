@@ -8,8 +8,8 @@ pytest.importorskip("httpx")
 
 import chromadb
 from fastapi.testclient import TestClient
-from mempalace.team_auth import hash_api_key
-from mempalace.team_server import create_app
+from cortex.team_auth import hash_api_key
+from cortex.team_server import create_app
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def full_env(tmp_path):
     local_palace = tmp_path / "local_palace"
     local_palace.mkdir()
     local_client = chromadb.PersistentClient(path=str(local_palace))
-    local_col = local_client.get_or_create_collection("mempalace_drawers")
+    local_col = local_client.get_or_create_collection("cortex_drawers")
 
     # Add a local drawer
     local_col.upsert(

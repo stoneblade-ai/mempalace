@@ -1,13 +1,13 @@
 """Integration tests for team server endpoints."""
 import json
 import pytest
-from mempalace.team_auth import hash_api_key
+from cortex.team_auth import hash_api_key
 
 pytest.importorskip("fastapi")
 pytest.importorskip("httpx")
 
 from fastapi.testclient import TestClient
-from mempalace.team_server import create_app
+from cortex.team_server import create_app
 
 
 @pytest.fixture

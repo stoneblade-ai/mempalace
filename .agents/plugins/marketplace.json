@@ -1,11 +1,11 @@
 {
-  "name": "mempalace",
+  "name": "cortex",
   "interface": {
-    "displayName": "MemPalace"
+    "displayName": "Cortex"
   },
   "plugins": [
     {
-      "name": "mempalace",
+      "name": "cortex",
       "source": {
         "source": "local",
         "path": "./.codex-plugin"

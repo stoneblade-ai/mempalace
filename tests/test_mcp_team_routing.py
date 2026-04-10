@@ -2,19 +2,19 @@
 import json
 import pytest
 from unittest.mock import MagicMock
-from mempalace.mcp_server import TOOLS
+from cortex.mcp_server import TOOLS
 
 
 def test_publish_tool_exists():
-    """mempalace_publish tool is registered."""
-    assert "mempalace_publish" in TOOLS
-    assert "handler" in TOOLS["mempalace_publish"]
-    assert "input_schema" in TOOLS["mempalace_publish"]
+    """cortex_publish tool is registered."""
+    assert "cortex_publish" in TOOLS
+    assert "handler" in TOOLS["cortex_publish"]
+    assert "input_schema" in TOOLS["cortex_publish"]
 
 
 def test_publish_tool_schema():
     """Publish tool has correct input schema."""
-    schema = TOOLS["mempalace_publish"]["input_schema"]
+    schema = TOOLS["cortex_publish"]["input_schema"]
     assert "drawer_id" in schema["properties"]
     assert "target_wing" in schema["properties"]
     assert "target_room" in schema["properties"]
@@ -23,7 +23,7 @@ def test_publish_tool_schema():
 
 def test_publish_without_team_config():
     """Publish without team config returns error."""
-    handler = TOOLS["mempalace_publish"]["handler"]
+    handler = TOOLS["cortex_publish"]["handler"]
     # When team is not configured, should return an error
     result = handler("some_drawer_id")
     assert result.get("success") is False

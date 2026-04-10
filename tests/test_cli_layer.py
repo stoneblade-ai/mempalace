@@ -5,10 +5,10 @@ from unittest.mock import patch, MagicMock
 
 def test_search_layer_flag_parsed():
     """--layer flag is accepted by search command."""
-    from mempalace.cli import main
+    from cortex.cli import main
     import sys
-    with patch.object(sys, "argv", ["mempalace", "search", "test query", "--layer", "local"]):
-        with patch("mempalace.cli.cmd_search") as mock_search:
+    with patch.object(sys, "argv", ["cortex", "search", "test query", "--layer", "local"]):
+        with patch("cortex.cli.cmd_search") as mock_search:
             try:
                 main()
             except SystemExit:
@@ -20,10 +20,10 @@ def test_search_layer_flag_parsed():
 
 def test_publish_command_parsed():
     """publish command is accepted."""
-    from mempalace.cli import main
+    from cortex.cli import main
     import sys
-    with patch.object(sys, "argv", ["mempalace", "publish", "drawer_123"]):
-        with patch("mempalace.cli.cmd_publish") as mock_publish:
+    with patch.object(sys, "argv", ["cortex", "publish", "drawer_123"]):
+        with patch("cortex.cli.cmd_publish") as mock_publish:
             try:
                 main()
             except SystemExit:

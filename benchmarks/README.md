@@ -1,12 +1,12 @@
-# MemPal Benchmarks — Reproduction Guide
+# Cortex Benchmarks — Reproduction Guide
 
 Run the exact same benchmarks we report. Clone, install, run.
 
 ## Setup
 
 ```bash
-git clone -b ben/benchmarking https://github.com/aya-thekeeper/mempal.git
-cd mempal
+git clone -b ben/benchmarking https://github.com/aya-thekeeper/cortex.git
+cd cortex
 pip install chromadb pyyaml
 ```
 

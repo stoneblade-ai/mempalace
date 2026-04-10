@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-MemPal × LoCoMo Benchmark
+Cortex × LoCoMo Benchmark
 ===========================
 
-Evaluates MemPal's retrieval against the LoCoMo benchmark.
+Evaluates Cortex's retrieval against the LoCoMo benchmark.
 10 conversations, ~200 QA pairs across 5 categories.
 
 For each conversation:
-1. Ingest all sessions into a fresh MemPal palace
+1. Ingest all sessions into a fresh Cortex palace
 2. For each QA pair, query the palace
 3. Score retrieval recall (did we find the evidence dialog?)
 4. Score F1 (optional, if --llm is provided)
@@ -655,7 +655,7 @@ def run_benchmark(
     rerank_label = f" + LLM re-rank ({llm_model.split('-')[1]})" if llm_rerank_enabled else ""
 
     print(f"\n{'=' * 60}")
-    print("  MemPal × LoCoMo Benchmark")
+    print("  Cortex × LoCoMo Benchmark")
     print(f"{'=' * 60}")
     print(f"  Data:        {Path(data_file).name}")
     print(f"  Conversations: {len(data)}")
@@ -706,15 +706,15 @@ def run_benchmark(
                 f"{len(sessions)} sessions, {len(corpus)} docs, {len(qa_pairs)} questions"
             )
 
-        tmpdir = tempfile.mkdtemp(prefix="mempal_locomo_")
+        tmpdir = tempfile.mkdtemp(prefix="cortex_locomo_")
         palace_path = os.path.join(tmpdir, "palace")
 
         try:
             client = chromadb.PersistentClient(path=palace_path)
-            collection = client.create_collection("mempal_drawers")
+            collection = client.create_collection("cortex_drawers")
 
             if mode == "aaak":
-                from mempalace.dialect import Dialect
+                from cortex.dialect import Dialect
 
                 dialect = Dialect()
                 docs_to_ingest = [dialect.compress(doc) for doc in corpus]
@@ -938,7 +938,7 @@ def run_benchmark(
     avg_recall = sum(all_recall) / len(all_recall) if all_recall else 0
 
     print(f"\n{'=' * 60}")
-    print(f"  RESULTS — MemPal ({mode}{rerank_label}, {granularity}, top-{top_k})")
+    print(f"  RESULTS — Cortex ({mode}{rerank_label}, {granularity}, top-{top_k})")
     print(f"{'=' * 60}")
     print(f"  Time:        {elapsed:.1f}s ({elapsed / max(total_qa, 1):.2f}s per question)")
     print(f"  Questions:   {total_qa}")
@@ -998,7 +998,7 @@ def evidence_to_session_ids(evidence):
 # =============================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MemPal × LoCoMo Benchmark")
+    parser = argparse.ArgumentParser(description="Cortex × LoCoMo Benchmark")
     parser.add_argument("data_file", help="Path to locomo10.json")
     parser.add_argument("--top-k", type=int, default=50, help="Top-k retrieval (default: 50)")
     parser.add_argument(

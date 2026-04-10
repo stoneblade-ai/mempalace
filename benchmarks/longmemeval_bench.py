@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-MemPal × LongMemEval Benchmark
+Cortex × LongMemEval Benchmark
 ================================
 
-Evaluates MemPal's retrieval against the LongMemEval benchmark.
+Evaluates Cortex's retrieval against the LongMemEval benchmark.
 No modifications to LongMemEval's code required.
 
 For each of the 500 questions:
-1. Ingest all haystack sessions into a fresh MemPal palace
+1. Ingest all haystack sessions into a fresh Cortex palace
 2. Query the palace with the question
 3. Score retrieval against ground-truth answer sessions
 
@@ -41,7 +41,7 @@ from datetime import datetime
 
 import chromadb
 
-# Add mempal to path
+# Add cortex to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
@@ -143,7 +143,7 @@ def _make_embed_fn(model_name: str):
         return None
 
 
-def _fresh_collection(name="mempal_drawers"):
+def _fresh_collection(name="cortex_drawers"):
     """Delete and recreate collection for a clean slate between queries."""
     global _bench_embed_fn
     try:
@@ -162,7 +162,7 @@ def _fresh_collection(name="mempal_drawers"):
 
 def build_palace_and_retrieve(entry, granularity="session", n_results=50):
     """
-    Build a fresh MemPal palace from haystack sessions, then retrieve.
+    Build a fresh Cortex palace from haystack sessions, then retrieve.
 
     Args:
         entry: One LongMemEval question entry
@@ -247,7 +247,7 @@ def build_palace_and_retrieve_aaak(entry, granularity="session", n_results=50):
     Query still uses raw question text — tests whether compressed representations
     retain enough semantic signal for retrieval.
     """
-    from mempalace.dialect import Dialect
+    from cortex.dialect import Dialect
 
     dialect = Dialect()
 
@@ -903,7 +903,7 @@ def build_palace_and_retrieve_hybrid_v2(
         top_ids = [corpus_ids[i] for i in top_indices]
         top_ts = [corpus_timestamps[i] for i in top_indices]
 
-        collection2 = _fresh_collection("mempal_drawers_pass2")
+        collection2 = _fresh_collection("cortex_drawers_pass2")
         collection2.add(
             documents=top_corpus_full,
             ids=[f"doc2_{i}" for i in range(len(top_corpus_full))],
@@ -1239,7 +1239,7 @@ def build_palace_and_retrieve_hybrid_v3(
         top_ids = [corpus_ids[i] for i in top_indices]
         top_ts = [corpus_timestamps[i] for i in top_indices]
 
-        collection2 = _fresh_collection("mempal_drawers_pass2")
+        collection2 = _fresh_collection("cortex_drawers_pass2")
         collection2.add(
             documents=top_corpus_full,
             ids=[f"doc2_{i}" for i in range(len(top_corpus_full))],
@@ -1808,7 +1808,7 @@ def build_palace_and_retrieve_hybrid_v4(
 # PALACE MODE — Hall classification + drawer indexing + hall-boosted retrieval
 # =============================================================================
 
-# Hall names mirror the MemPal palace taxonomy
+# Hall names mirror the Cortex palace taxonomy
 HALL_PREFERENCES = "hall_preferences"
 HALL_FACTS = "hall_facts"
 HALL_EVENTS = "hall_events"
@@ -2282,7 +2282,7 @@ def build_palace_and_retrieve_palace(
 
     # Only do Pass 1 for specific halls (not GENERAL — too broad to be useful)
     if primary_hall != HALL_GENERAL and len(pass1_docs) >= 1:
-        coll1 = _fresh_collection("mempal_hall")
+        coll1 = _fresh_collection("cortex_hall")
         coll1.add(
             documents=pass1_docs,
             ids=[f"h_{i}" for i in range(len(pass1_docs))],
@@ -3032,7 +3032,7 @@ def run_benchmark(
                     pass
 
     print(f"\n{'=' * 60}")
-    print("  MemPal × LongMemEval Benchmark")
+    print("  Cortex × LongMemEval Benchmark")
     print(f"{'=' * 60}")
     print(f"  Data:        {Path(data_file).name}")
     print(f"  Questions:   {len(data)}")
@@ -3194,7 +3194,7 @@ def run_benchmark(
 
     # Print results
     print(f"\n{'=' * 60}")
-    print(f"  RESULTS — MemPal ({mode} mode, {granularity} granularity)")
+    print(f"  RESULTS — Cortex ({mode} mode, {granularity} granularity)")
     print(f"{'=' * 60}")
     print(f"  Time: {elapsed:.1f}s ({elapsed / len(data):.2f}s per question)\n")
 
@@ -3242,7 +3242,7 @@ def run_benchmark(
 # =============================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MemPal × LongMemEval Benchmark")
+    parser = argparse.ArgumentParser(description="Cortex × LongMemEval Benchmark")
     parser.add_argument("data_file", help="Path to longmemeval_s_cleaned.json")
     parser.add_argument(
         "--granularity",
@@ -3378,7 +3378,7 @@ if __name__ == "__main__":
         embed_tag = f"_{args.embed_model}" if args.embed_model != "default" else ""
         suffix = "_llmrerank" if args.llm_rerank else ""
         subset_tag = f"_{split_subset}" if split_subset else ""
-        args.out = f"benchmarks/results_mempal_{args.mode}{embed_tag}{suffix}{subset_tag}_{args.granularity}_{datetime.now().strftime('%Y%m%d_%H%M')}.jsonl"
+        args.out = f"benchmarks/results_cortex_{args.mode}{embed_tag}{suffix}{subset_tag}_{args.granularity}_{datetime.now().strftime('%Y%m%d_%H%M')}.jsonl"
 
     # Set global embedding function before running
     if args.embed_model != "default":

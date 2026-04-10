@@ -1,6 +1,6 @@
 """Tests for team API key auth: hashing, generation, user lookup."""
 
-from mempalace.team_auth import hash_api_key, generate_api_key, resolve_user, check_wing_permission
+from cortex.team_auth import hash_api_key, generate_api_key, resolve_user, check_wing_permission
 
 
 def test_hash_api_key_deterministic():

@@ -1,8 +1,8 @@
-"""Tests for mempalace.spellcheck — spell-correction utilities."""
+"""Tests for cortex.spellcheck — spell-correction utilities."""
 
 from unittest.mock import patch
 
-from mempalace.spellcheck import (
+from cortex.spellcheck import (
     _edit_distance,
     _get_system_words,
     _should_skip,
@@ -30,7 +30,7 @@ class TestShouldSkip:
 
     def test_camelcase_skipped(self):
         assert _should_skip("ChromaDB", set()) is True
-        assert _should_skip("MemPalace", set()) is True
+        assert _should_skip("FastAPI", set()) is True
 
     def test_allcaps_skipped(self):
         assert _should_skip("NDCG", set()) is True
@@ -49,7 +49,7 @@ class TestShouldSkip:
         assert _should_skip("**bold**", set()) is True
 
     def test_known_name_skipped(self):
-        assert _should_skip("mempalace", {"mempalace"}) is True
+        assert _should_skip("cortex", {"cortex"}) is True
 
     def test_normal_word_not_skipped(self):
         assert _should_skip("hello", set()) is False
@@ -90,7 +90,7 @@ def test_get_system_words_returns_set():
 
 def test_spellcheck_user_text_passthrough_no_autocorrect():
     """When autocorrect is not installed, text passes through unchanged."""
-    with patch("mempalace.spellcheck._get_speller", return_value=None):
+    with patch("cortex.spellcheck._get_speller", return_value=None):
         text = "somee misspeledd textt"
         assert spellcheck_user_text(text) == text
 
@@ -102,9 +102,9 @@ def test_spellcheck_user_text_with_speller():
         corrections = {"knoe": "know", "befor": "before"}
         return corrections.get(word, word)
 
-    with patch("mempalace.spellcheck._get_speller", return_value=fake_speller):
-        with patch("mempalace.spellcheck._get_system_words", return_value=set()):
-            with patch("mempalace.spellcheck._load_known_names", return_value=set()):
+    with patch("cortex.spellcheck._get_speller", return_value=fake_speller):
+        with patch("cortex.spellcheck._get_system_words", return_value=set()):
+            with patch("cortex.spellcheck._load_known_names", return_value=set()):
                 result = spellcheck_user_text("knoe the question befor")
                 assert "know" in result
                 assert "before" in result
@@ -116,8 +116,8 @@ def test_spellcheck_preserves_technical_terms():
     def fake_speller(word):
         return "WRONG"
 
-    with patch("mempalace.spellcheck._get_speller", return_value=fake_speller):
-        with patch("mempalace.spellcheck._get_system_words", return_value=set()):
+    with patch("cortex.spellcheck._get_speller", return_value=fake_speller):
+        with patch("cortex.spellcheck._get_system_words", return_value=set()):
             result = spellcheck_user_text("ChromaDB bge-large", known_names=set())
             assert "ChromaDB" in result
             assert "bge-large" in result
@@ -129,7 +129,7 @@ def test_spellcheck_preserves_technical_terms():
 
 def test_transcript_line_user_turn():
     """Lines starting with '>' should be processed."""
-    with patch("mempalace.spellcheck.spellcheck_user_text", return_value="corrected"):
+    with patch("cortex.spellcheck.spellcheck_user_text", return_value="corrected"):
         result = spellcheck_transcript_line("> hello world")
         assert "corrected" in result
 
@@ -152,7 +152,7 @@ def test_transcript_line_empty_user_turn():
 def test_spellcheck_transcript_processes_content():
     """Full transcript: only '>' lines are touched."""
     content = "Assistant line\n> user line\nAnother assistant line"
-    with patch("mempalace.spellcheck.spellcheck_user_text", return_value="fixed"):
+    with patch("cortex.spellcheck.spellcheck_user_text", return_value="fixed"):
         result = spellcheck_transcript(content)
         lines = result.split("\n")
         assert lines[0] == "Assistant line"

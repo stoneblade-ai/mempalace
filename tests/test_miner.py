@@ -6,8 +6,8 @@ from pathlib import Path
 import chromadb
 import yaml
 
-from mempalace.miner import mine, scan_project
-from mempalace.palace import file_already_mined
+from cortex.miner import mine, scan_project
+from cortex.palace import file_already_mined
 
 
 def write_file(path: Path, content: str):
@@ -29,7 +29,7 @@ def test_project_mining():
         write_file(
             project_root / "backend" / "app.py", "def main():\n    print('hello world')\n" * 20
         )
-        with open(project_root / "mempalace.yaml", "w") as f:
+        with open(project_root / "cortex.yaml", "w") as f:
             yaml.dump(
                 {
                     "wing": "test_project",
@@ -45,7 +45,7 @@ def test_project_mining():
         mine(str(project_root), str(palace_path))
 
         client = chromadb.PersistentClient(path=str(palace_path))
-        col = client.get_collection("mempalace_drawers")
+        col = client.get_collection("cortex_drawers")
         assert col.count() > 0
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
@@ -215,7 +215,7 @@ def test_file_already_mined_check_mtime():
         palace_path = os.path.join(tmpdir, "palace")
         os.makedirs(palace_path)
         client = chromadb.PersistentClient(path=palace_path)
-        col = client.get_or_create_collection("mempalace_drawers")
+        col = client.get_or_create_collection("cortex_drawers")
 
         test_file = os.path.join(tmpdir, "test.txt")
         with open(test_file, "w") as f:

@@ -5,7 +5,7 @@ import pytest
 pytest.importorskip("httpx")
 
 from unittest.mock import AsyncMock, patch
-from mempalace.team_client import TeamClient
+from cortex.team_client import TeamClient
 
 
 @pytest.fixture

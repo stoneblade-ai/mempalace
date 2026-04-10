@@ -1,4 +1,4 @@
-# MemPal Benchmark Results — Full Progression
+# Cortex Benchmark Results — Full Progression
 
 **March 2026 — The complete record from baseline to state-of-the-art.**
 
@@ -13,9 +13,9 @@ Every competitive memory system uses an LLM to manage memory:
 
 They all start from the assumption that you need AI to decide what to remember.
 
-**MemPal's baseline just stores the actual words and searches them with ChromaDB's default embeddings. No extraction. No summarization. No AI deciding what matters. And it scores 96.6% on LongMemEval.**
+**Cortex's baseline just stores the actual words and searches them with ChromaDB's default embeddings. No extraction. No summarization. No AI deciding what matters. And it scores 96.6% on LongMemEval.**
 
-That's the finding. The field is over-engineering the memory extraction step. Raw verbatim text with good embeddings is a stronger baseline than anyone realized — because it doesn't lose information. When an LLM extracts "user prefers PostgreSQL" and throws away the original conversation, it loses the context of *why*, the alternatives considered, the tradeoffs discussed. MemPal keeps all of that, and the search model finds it.
+That's the finding. The field is over-engineering the memory extraction step. Raw verbatim text with good embeddings is a stronger baseline than anyone realized — because it doesn't lose information. When an LLM extracts "user prefers PostgreSQL" and throws away the original conversation, it loses the context of *why*, the alternatives considered, the tradeoffs discussed. Cortex keeps all of that, and the search model finds it.
 
 Nobody published this result because nobody tried the simple thing and measured it properly.
 
@@ -43,21 +43,21 @@ Both are real. Both are reproducible. Neither is the whole picture alone.
 
 | # | System | R@5 | LLM Required | Which LLM | Notes |
 |---|---|---|---|---|---|
-| 1 | **MemPal (hybrid v4 + rerank)** | **100%** | Optional | Haiku | Reproducible, 500/500 |
+| 1 | **Cortex (hybrid v4 + rerank)** | **100%** | Optional | Haiku | Reproducible, 500/500 |
 | 2 | Supermemory ASMR | ~99% | Yes | Undisclosed | Research only, not in production |
-| 3 | MemPal (hybrid v3 + rerank) | 99.4% | Optional | Haiku | Reproducible |
-| 3 | MemPal (palace + rerank) | 99.4% | Optional | Haiku | Independent architecture |
+| 3 | Cortex (hybrid v3 + rerank) | 99.4% | Optional | Haiku | Reproducible |
+| 3 | Cortex (palace + rerank) | 99.4% | Optional | Haiku | Independent architecture |
 | 4 | Mastra | 94.87% | Yes | GPT-5-mini | — |
-| 5 | **MemPal (raw, no LLM)** | **96.6%** | **None** | **None** | **Highest zero-API score published** |
+| 5 | **Cortex (raw, no LLM)** | **96.6%** | **None** | **None** | **Highest zero-API score published** |
 | 6 | Hindsight | 91.4% | Yes | Gemini-3 | — |
 | 7 | Supermemory (production) | ~85% | Yes | Undisclosed | — |
 | 8 | Stella (dense retriever) | ~85% | None | None | Academic baseline |
 | 9 | Contriever | ~78% | None | None | Academic baseline |
 | 10 | BM25 (sparse) | ~70% | None | None | Keyword baseline |
 
-**MemPal raw (96.6%) is the highest published LongMemEval score that requires no API key, no cloud, and no LLM at any stage.**
+**Cortex raw (96.6%) is the highest published LongMemEval score that requires no API key, no cloud, and no LLM at any stage.**
 
-**MemPal hybrid v4 + Haiku rerank (100%) is the first perfect score on LongMemEval — 500/500 questions, all 6 question types at 100%.**
+**Cortex hybrid v4 + Haiku rerank (100%) is the first perfect score on LongMemEval — 500/500 questions, all 6 question types at 100%.**
 
 ---
 
@@ -67,14 +67,14 @@ Both are real. Both are reproducible. Neither is the whole picture alone.
 
 | System | Score | Notes |
 |---|---|---|
-| **MemPal** | **92.9%** | Verbatim text, semantic search |
+| **Cortex** | **92.9%** | Verbatim text, semantic search |
 | Gemini (long context) | 70–82% | Full history in context window |
 | Block extraction | 57–71% | LLM-processed blocks |
 | Mem0 (RAG) | 30–45% | LLM-extracted memories |
 
-MemPal is more than 2× Mem0 on this benchmark. With Sonnet rerank, MemPal reaches **100% on LoCoMo** across all 5 question types including temporal-inference (was 46% at baseline).
+Cortex is more than 2× Mem0 on this benchmark. With Sonnet rerank, Cortex reaches **100% on LoCoMo** across all 5 question types including temporal-inference (was 46% at baseline).
 
-**Why MemPal beats Mem0 by 2×:** Mem0 uses an LLM to extract memories — it decides what to remember and discards the rest. When it extracts the wrong thing, the memory is gone. MemPal stores verbatim text. Nothing is discarded. The simpler approach wins because it doesn't lose information.
+**Why Cortex beats Mem0 by 2×:** Mem0 uses an LLM to extract memories — it decides what to remember and discards the rest. When it extracts the wrong thing, the memory is gone. Cortex stores verbatim text. Nothing is discarded. The simpler approach wins because it doesn't lose information.
 
 **Per-category breakdown:**
 
@@ -126,7 +126,7 @@ Wings v3 design: one closet per speaker per session. Owner's turns verbatim; oth
 
 Root cause of wings v1 failure: (1) speaker WHERE filter discarded evidence about Caroline when evidence lived in a John-tagged closet (John spoke more words but conversation was about Caroline); (2) top_k=10 from ~184 closets = 5.4% coverage vs 37% in session mode. Fix: retrieve all closets, use speaker match as 15% distance boost instead of filter.
 
-**With Sonnet rerank, MemPal achieves 100% on every LoCoMo question type — including temporal-inference, which was the hardest category at baseline.**
+**With Sonnet rerank, Cortex achieves 100% on every LoCoMo question type — including temporal-inference, which was the hardest category at baseline.**
 
 **Per-category breakdown (hybrid + Sonnet rerank):**
 
@@ -308,8 +308,8 @@ The palace classifies each question into one of 5 halls. Pass 1 searches only wi
 ### Setup
 
 ```bash
-git clone -b ben/benchmarking https://github.com/aya-thekeeper/mempal.git
-cd mempal
+git clone -b ben/benchmarking https://github.com/aya-thekeeper/cortex.git
+cd cortex
 pip install chromadb pyyaml
 mkdir -p /tmp/longmemeval-data
 curl -fsSL -o /tmp/longmemeval-data/longmemeval_s_cleaned.json \
@@ -420,7 +420,7 @@ Every major AI memory system and where it stands:
 
 | System | Approach | LongMemEval | Requires | Notes |
 |---|---|---|---|---|
-| **MemPal** | Raw verbatim text + ChromaDB | 96.6% / 100% | Python + ChromaDB | Open source — 100% LME + 100% LoCoMo w/ rerank |
+| **Cortex** | Raw verbatim text + ChromaDB | 96.6% / 100% | Python + ChromaDB | Open source — 100% LME + 100% LoCoMo w/ rerank |
 | Supermemory | Agentic LLM search (ASMR) | ~99% (exp) / ~85% (prod) | LLM API | Production + experimental tracks |
 | Mastra | LLM observation extraction | 94.87% | GPT-5-mini | Highest validated production score |
 | Hindsight | Time-aware vector retrieval | 91.4% | LLM API | Validated by Virginia Tech |
@@ -433,7 +433,7 @@ Every major AI memory system and where it stands:
 
 ### Tradeoffs at a Glance
 
-| | **MemPal** | LLM-Based (Mem0, Mastra) | Heavy Infra (OpenViking, Zep) |
+| | **Cortex** | LLM-Based (Mem0, Mastra) | Heavy Infra (OpenViking, Zep) |
 |---|---|---|---|
 | No API key needed | ✅ | ✗ | ✗ |
 | Data stays local | ✅ | Sent to API | Depends |
@@ -527,8 +527,8 @@ All raw results are committed:
 | `results_diary_haiku_rerank_full500.jsonl` | diary+rerank | 98.2% | 65% cache, partial |
 | `results_aaak_full500.jsonl` | aaak | 84.2% | Compressed sessions |
 | `results_rooms_full500.jsonl` | rooms | 89.4% | Session rooms |
-| `results_mempal_hybrid_v4_llmrerank_session_20260325_0930.jsonl` | hybrid_v4+rerank | 100% | Haiku, 500/500 |
-| `results_mempal_hybrid_v4_llmrerank_session_20260325_1054.jsonl` | hybrid_v4+rerank | 100% | Sonnet, LME 500/500 |
+| `results_cortex_hybrid_v4_llmrerank_session_20260325_0930.jsonl` | hybrid_v4+rerank | 100% | Haiku, 500/500 |
+| `results_cortex_hybrid_v4_llmrerank_session_20260325_1054.jsonl` | hybrid_v4+rerank | 100% | Sonnet, LME 500/500 |
 | `results_locomo_hybrid_llmrerank_session_top50_20260325_1056.json` | locomo hybrid+rerank | 100% | Sonnet, 1986/1986 |
 | `results_lme_hybrid_v4_held_out_450_20260326_0010.json` | hybrid_v4 held-out | 98.4% R@5 | Clean — 450 unseen questions |
 | `results_locomo_hybrid_session_top10_*.json` | locomo hybrid_v5 | 88.9% R@10 | Honest — top-10, no rerank |
@@ -658,7 +658,7 @@ Result files: `results_locomo_palace_session_top5_20260326_0031.json`, `results_
 | **noisy** | **43.4%** | **Distractors/irrelevant info** |
 | **Overall** | **80.3%** | 6828/8500 |
 
-**Strongest categories**: aggregative (99.3%), comparative (98.4%), lowlevel_rec (99.8%) — MemPal handles multi-turn fact combination extremely well.
+**Strongest categories**: aggregative (99.3%), comparative (98.4%), lowlevel_rec (99.8%) — Cortex handles multi-turn fact combination extremely well.
 
 **Weakest**: noisy (43.4%) — questions designed with deliberate distractors and irrelevant information mixed in. This is the designed hard case for verbatim storage: when noise is indistinguishable from signal at the embedding level, retrieval degrades. Post-processing (56.6%) and conditional (57.3%) are reasoning-heavy categories where retrieval alone is insufficient.
 

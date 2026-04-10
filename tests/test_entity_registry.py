@@ -1,8 +1,8 @@
-"""Tests for mempalace.entity_registry."""
+"""Tests for cortex.entity_registry."""
 
 from unittest.mock import patch
 
-from mempalace.entity_registry import (
+from cortex.entity_registry import (
     COMMON_ENGLISH_WORDS,
     PERSON_CONTEXT_PATTERNS,
     EntityRegistry,
@@ -48,13 +48,13 @@ def test_save_and_load_roundtrip(tmp_path):
     registry.seed(
         mode="work",
         people=[{"name": "Alice", "relationship": "colleague", "context": "work"}],
-        projects=["MemPalace"],
+        projects=["Cortex"],
     )
     # Load again from same dir
     loaded = EntityRegistry.load(config_dir=tmp_path)
     assert loaded.mode == "work"
     assert "Alice" in loaded.people
-    assert "MemPalace" in loaded.projects
+    assert "Cortex" in loaded.projects
 
 
 def test_save_creates_file(tmp_path):
@@ -74,7 +74,7 @@ def test_seed_registers_people(tmp_path):
             {"name": "Riley", "relationship": "daughter", "context": "personal"},
             {"name": "Devon", "relationship": "friend", "context": "personal"},
         ],
-        projects=["MemPalace"],
+        projects=["Cortex"],
     )
     assert "Riley" in registry.people
     assert "Devon" in registry.people
@@ -151,8 +151,8 @@ def test_lookup_known_person(tmp_path):
 
 def test_lookup_known_project(tmp_path):
     registry = EntityRegistry.load(config_dir=tmp_path)
-    registry.seed(mode="work", people=[], projects=["MemPalace"])
-    result = registry.lookup("MemPalace")
+    registry.seed(mode="work", people=[], projects=["Cortex"])
+    result = registry.lookup("Cortex")
     assert result["type"] == "project"
     assert result["confidence"] == 1.0
 
@@ -227,13 +227,13 @@ def test_research_caches_result(tmp_path):
         "wiki_title": "Saoirse",
     }
 
-    with patch("mempalace.entity_registry._wikipedia_lookup", return_value=mock_result):
+    with patch("cortex.entity_registry._wikipedia_lookup", return_value=mock_result):
         result = registry.research("Saoirse", auto_confirm=True)
     assert result["inferred_type"] == "person"
 
     # Second call should use cache, not call Wikipedia again
     with patch(
-        "mempalace.entity_registry._wikipedia_lookup",
+        "cortex.entity_registry._wikipedia_lookup",
         side_effect=AssertionError("should not be called"),
     ):
         cached = registry.research("Saoirse")
@@ -250,7 +250,7 @@ def test_confirm_research_adds_to_people(tmp_path):
         "wiki_summary": "Saoirse is a name",
         "wiki_title": "Saoirse",
     }
-    with patch("mempalace.entity_registry._wikipedia_lookup", return_value=mock_result):
+    with patch("cortex.entity_registry._wikipedia_lookup", return_value=mock_result):
         registry.research("Saoirse", auto_confirm=False)
 
     registry.confirm_research("Saoirse", entity_type="person", relationship="friend")
@@ -305,9 +305,9 @@ def test_summary(tmp_path):
     registry.seed(
         mode="personal",
         people=[{"name": "Riley", "relationship": "daughter", "context": "personal"}],
-        projects=["MemPalace"],
+        projects=["Cortex"],
     )
     s = registry.summary()
     assert "personal" in s
     assert "Riley" in s
-    assert "MemPalace" in s
+    assert "Cortex" in s

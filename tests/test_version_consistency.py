@@ -1,8 +1,8 @@
 import re
 from pathlib import Path
 
-from mempalace import __version__
-from mempalace.mcp_server import handle_request
+from cortex import __version__
+from cortex.mcp_server import handle_request
 
 
 def _expected_version() -> str:

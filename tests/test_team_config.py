@@ -1,8 +1,8 @@
 """Tests for team server configuration: load, save, user CRUD."""
 import json
 import pytest
-from mempalace.team_config import TeamServerConfig
-from mempalace.team_auth import hash_api_key
+from cortex.team_config import TeamServerConfig
+from cortex.team_auth import hash_api_key
 
 
 def test_load_empty_config(tmp_path):

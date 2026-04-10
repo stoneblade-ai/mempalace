@@ -1,1 +1,1 @@
-# MemPalace scale benchmark suite
+# Cortex scale benchmark suite
